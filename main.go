@@ -12,10 +12,10 @@ import (
 
 //----------------------------------------------------------------
 func main() {
-	fmt.Println("Go Web Server")
+	fmt.Println("Video Web Server")
 	fmt.Printf("Operating System : %s\n", runtime.GOOS)
-	xip:=fmt.Sprintf("%s",GetOutboundIP())
-	port:="8080"
+	xip := fmt.Sprintf("%s", GetOutboundIP())
+	port := "8080"
 	switch {
 	//-------------------------------------------------------------
 	case len(os.Args) == 2:
@@ -26,8 +26,8 @@ func main() {
 	default:
 
 		fmt.Println("Server running....")
-		fmt.Println("Listening on "+xip+":"+port)
-		
+		fmt.Println("Listening on " + xip + ":" + port)
+
 		fmt.Println("")
 		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 			xdata := InitPage(xip)
@@ -36,11 +36,6 @@ func main() {
 		//------------------------------------------------ About Page Handler
 		http.HandleFunc("/about", func(w http.ResponseWriter, r *http.Request) {
 			xdata := AboutPage()
-			fmt.Fprint(w, xdata)
-		})
-		//------------------------------------------------ PlayGround Page Handler
-		http.HandleFunc("/playground", func(w http.ResponseWriter, r *http.Request) {
-			xdata := PlayGroundPage()
 			fmt.Fprint(w, xdata)
 		})
 		//------------------------------------------------ Display Page Handler
@@ -54,11 +49,8 @@ func main() {
 			fmt.Fprint(w, xdata)
 		})
 
-		//------------------------------------------------- Static Handler Handler
-		fs := http.FileServer(http.Dir("static/"))
-		http.Handle("/static/", http.StripPrefix("/static/", fs))
 		//------------------------------------------------- Start Server
-		Openbrowser(xip+":"+port)
+		Openbrowser(xip + ":" + port)
 		if err := http.ListenAndServe(xip+":"+port, nil); err != nil {
 			panic(err)
 		}
@@ -72,7 +64,8 @@ func Openbrowser(url string) error {
 	switch runtime.GOOS {
 	case "windows":
 		cmd = "cmd"
-		args = []string{"/c", "start"}
+		args = []string{"/c", "start msedge"}
+
 	case "linux":
 		cmd = "chromium-browser"
 		args = []string{""}
@@ -94,13 +87,14 @@ func InitPage(xip string) string {
 	xdata = xdata + "<html>"
 	xdata = xdata + "<head>"
 	//------------------------------------------------------------------------
-	xdata = xdata + "<title>Go Web Server Start Page</title>"
-	xdata = xdata + "  <link REL='StyleSheet' TYPE='text/css' HREF='static/css/style.css'>"
+	xdata = xdata + "<title>Video Web Server</title>"
+	xdata = DateTimeDisplay(xdata)
 	//------------------------------------------------------------------------
 	xdata = xdata + "</head>"
 	//------------------------------------------------------------------------
+
 	xdata = xdata + "<body>"
-	xdata = xdata + "<H1>Go Web Server.</H1>"
+	xdata = xdata + "<H1>Video Web Server.</H1>"
 	//---------
 	host, _ := os.Hostname()
 	addrs, _ := net.LookupIP(host)
@@ -109,17 +103,17 @@ func InitPage(xip string) string {
 			xxip = fmt.Sprintf("%s", ipv4)
 		}
 	}
-	xdata = xdata + "<p> Host Port IP : " + xip
+	xdata = xdata + "<body onload='startTime()'>"
+	xdata = xdata + "<div id='txtdt'></div>"
+
+	xdata = xdata + "Host Port IP : " + xip
 	xdata = xdata + "<BR> Machine IP : " + xxip + "</p>"
+
 	xdata = xdata + "  <A HREF='http://" + xip + ":8080/about'> [ About ] </A>  "
-	xdata = xdata + "  <A HREF='http://" + xip + ":8080/playground'> [ PlayGround ] </A>  "
 	xdata = xdata + "  <A HREF='http://" + xip + ":8080/display'> [ Display ] </A>  "
 	xdata = xdata + "  <A HREF='http://" + xip + ":8080/test'> [ Testing ] </A>  "
-	xdata = xdata + "  <BR>  Static :"
-	xdata = xdata + "  <A HREF='http://" + xip + ":8080/static/test123.html'> [ Test123 ] </A>  "
-	xdata = xdata + "  <A HREF='http://" + xip + ":8080/static/index.html'> [ Index ] </A>  "
-	xdata = xdata + "  <A HREF='http://" + xip + ":8080/static/testdev.html'> [ TestDev ] </A>  "
-	xdata = xdata + "<BR><BR>Go Web Server...."
+	xdata = xdata + "<BR><BR>Video Web Server...."
+
 	//------------------------------------------------------------------------
 	xdata = xdata + " </body>"
 	xdata = xdata + " </html>"
@@ -136,7 +130,6 @@ func AboutPage() string {
 	xdata = xdata + "<head>"
 	//------------------------------------------------------------------------
 	xdata = xdata + "<title>About Page</title>"
-	xdata = xdata + "  <link REL='StyleSheet' TYPE='text/css' HREF='static/css/style.css'>"
 	//------------------------------------------------------------------------
 	xdata = DateTimeDisplay(xdata)
 	xdata = xdata + "<style>"
@@ -155,12 +148,13 @@ func AboutPage() string {
 	xdata = xdata + "</head>"
 	//------------------------------------------------------------------------
 	xdata = xdata + "<body onload='startTime()'>"
-	xdata = xdata + "<p>Go Web Server</p>"
+	xdata = xdata + "<p>Video Web Server</p>"
 	xdata = xdata + "<div id='txtdt'></div>"
 	//---------
-	xdata = xdata + "  <A HREF='https://github.com/Com1Software/Test-GoWebServer'> [ GoWebServer GitHub Repository ] </A>  "
-	xdata = xdata + "<BR>"
-	xdata = xdata + "Go Web Server"
+	xdata = xdata + "<BR><BR>"
+	xdata = xdata + "  <A HREF='https://github.com/Com1Software/Video-Web-Server'> [ Video Web Server GitHub Repository ] </A>  "
+	xdata = xdata + "<BR><BR>"
+	xdata = xdata + "Video Web Server"
 	//------------------------------------------------------------------------
 
 	//------------------------------------------------------------------------
@@ -180,7 +174,6 @@ func TestPage(xip string) string {
 	xdata = xdata + "<head>"
 	//------------------------------------------------------------------------
 	xdata = xdata + "<title>Test Page</title>"
-	xdata = xdata + "  <link REL='StyleSheet' TYPE='text/css' HREF='static/css/style.css'>"
 	//------------------------------------------------------------------------
 	xdata = LoopDisplay(xdata)
 
@@ -222,7 +215,7 @@ func TestPage(xip string) string {
 	xdata = xdata + "</center>"
 
 	//------------------------------------------------------------------------
-		xdata = xdata + "  <A HREF='http://" + xip + ":8080'> [ Return to Start Page ] </A>  "
+	xdata = xdata + "  <A HREF='http://" + xip + ":8080'> [ Return to Start Page ] </A>  "
 
 	//------------------------------------------------------------------------
 	xdata = xdata + " </body>"
@@ -241,7 +234,6 @@ func DisplayPage() string {
 	xdata = xdata + "<head>"
 	//------------------------------------------------------------------------
 	xdata = xdata + "<title>Display Page</title>"
-	xdata = xdata + "  <link REL='StyleSheet' TYPE='text/css' HREF='static/css/style.css'>"
 	//------------------------------------------------------------------------
 	xdata = DateTimeDisplay(xdata)
 	xdata = xdata + "<style>"
@@ -283,56 +275,6 @@ func DisplayPage() string {
 
 	//------------------------------------------------------------------------
 
-	//------------------------------------------------------------------------
-	xdata = xdata + " </body>"
-	xdata = xdata + " </html>"
-	return xdata
-
-}
-
-//----------------------------------------------------------------
-//----------------------------------------------------------------
-func PlayGroundPage() string {
-	//---------------------------------------------------------------------------
-
-	//----------------------------------------------------------------------------
-	xdata := "<!DOCTYPE html>"
-	xdata = xdata + "<html>"
-	xdata = xdata + "<head>"
-	//------------------------------------------------------------------------
-	xdata = xdata + "<title>The PlayGround</title>"
-	xdata = xdata + "  <link REL='StyleSheet' TYPE='text/css' HREF='static/css/style.css'>"
-	//------------------------------------------------------------------------
-	xdata = DateTimeDisplay(xdata)
-	//------------------------------------------------------------------------
-	xdata = xdata + "</head>"
-	//------------------------------------------------------------------------
-	xdata = xdata + "<body onload='startTime()'>"
-	xdata = xdata + "<p>The PlayGround.</p>"
-	xdata = xdata + "<div id='txt'></div>"
-	xdata = xdata + "<p id='demo1'></p>"
-	xdata = xdata + "<button onclick='myFunction1()'>Click me 1</button> - "
-	xdata = xdata + "<button onclick='myFunction2()'>Click me 2</button>"
-	xdata = xdata + "<p id='demo2'></p>"
-	xdata = xdata + "<div id='txtdt'></div>"
-
-	//---------
-	xdata = xdata + "Go Web Server"
-
-	//------------------------------------------------------------------------
-	xdata = xdata + "<script>"
-	//----------
-	xdata = xdata + " function myFunction1() {"
-	xdata = xdata + "document.getElementById('demo1').innerHTML = 'Hello<BR> World';"
-	xdata = xdata + "document.getElementById('demo2').innerHTML = 'Hello<BR> World';"
-	xdata = xdata + "  }"
-	//----------
-	xdata = xdata + " function myFunction2() {"
-	xdata = xdata + "document.getElementById('demo1').innerHTML = 'Hello World 2 Upper screen stuff';"
-	xdata = xdata + "document.getElementById('demo2').innerHTML = 'Hello World 2 Lower screen stuff';"
-	xdata = xdata + "  }"
-	//----------
-	xdata = xdata + "</script>"
 	//------------------------------------------------------------------------
 	xdata = xdata + " </body>"
 	xdata = xdata + " </html>"
