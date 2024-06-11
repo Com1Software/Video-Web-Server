@@ -35,20 +35,28 @@ func main() {
 		})
 		//------------------------------------------------ About Page Handler
 		http.HandleFunc("/about", func(w http.ResponseWriter, r *http.Request) {
-			xdata := AboutPage()
+			xdata := AboutPage(xip)
 			fmt.Fprint(w, xdata)
 		})
-		//------------------------------------------------ Display Page Handler
+		//------------------------------------------------Dymnamic Display Page Handler
 		http.HandleFunc("/display", func(w http.ResponseWriter, r *http.Request) {
-			xdata := DisplayPage()
+			xdata := DisplayPage(xip)
 			fmt.Fprint(w, xdata)
 		})
-		//------------------------------------------------ Test Page Handler
-		http.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
-			xdata := TestPage(xip)
+		//------------------------------------------------ Generate Static Site Information Handler
+		http.HandleFunc("/generate", func(w http.ResponseWriter, r *http.Request) {
+			xdata := Generate(xip)
+			fmt.Fprint(w, xdata)
+		})
+		//------------------------------------------------ Generate Static Site Information Handler
+		http.HandleFunc("/generatesite", func(w http.ResponseWriter, r *http.Request) {
+			xdata := GenerateSite(xip)
 			fmt.Fprint(w, xdata)
 		})
 
+		//------------------------------------------------- Static Handler Handler
+		fs := http.FileServer(http.Dir("static/"))
+		http.Handle("/static/", http.StripPrefix("/static/", fs))
 		//------------------------------------------------- Start Server
 		Openbrowser(xip + ":" + port)
 		if err := http.ListenAndServe(xip+":"+port, nil); err != nil {
@@ -110,8 +118,9 @@ func InitPage(xip string) string {
 	xdata = xdata + "<BR> Machine IP : " + xxip + "</p>"
 
 	xdata = xdata + "  <A HREF='http://" + xip + ":8080/about'> [ About ] </A>  "
-	xdata = xdata + "  <A HREF='http://" + xip + ":8080/display'> [ Display ] </A>  "
-	xdata = xdata + "  <A HREF='http://" + xip + ":8080/test'> [ Testing ] </A>  "
+	xdata = xdata + "  <A HREF='http://" + xip + ":8080/display'> [ Dynamic Display ] </A>  "
+	xdata = xdata + "  <A HREF='http://" + xip + ":8080/static/index.html'> [ Static Index ] </A>  "
+	xdata = xdata + "  <A HREF='http://" + xip + ":8080/generate'> [ Generate Site Info] </A>  "
 	xdata = xdata + "<BR><BR>Video Web Server...."
 
 	//------------------------------------------------------------------------
@@ -121,7 +130,7 @@ func InitPage(xip string) string {
 }
 
 //----------------------------------------------------------------
-func AboutPage() string {
+func AboutPage(xip string) string {
 	//---------------------------------------------------------------------------
 
 	//----------------------------------------------------------------------------
@@ -154,6 +163,10 @@ func AboutPage() string {
 	xdata = xdata + "<BR><BR>"
 	xdata = xdata + "  <A HREF='https://github.com/Com1Software/Video-Web-Server'> [ Video Web Server GitHub Repository ] </A>  "
 	xdata = xdata + "<BR><BR>"
+	//------------------------------------------------------------------------
+	xdata = xdata + "  <A HREF='http://" + xip + ":8080'> [ Return to Start Page ] </A>  "
+	xdata = xdata + "<BR><BR>"
+
 	xdata = xdata + "Video Web Server"
 	//------------------------------------------------------------------------
 
@@ -165,7 +178,7 @@ func AboutPage() string {
 }
 
 //----------------------------------------------------------------
-func TestPage(xip string) string {
+func Generate(xip string) string {
 	//---------------------------------------------------------------------------
 
 	//----------------------------------------------------------------------------
@@ -173,9 +186,8 @@ func TestPage(xip string) string {
 	xdata = xdata + "<html>"
 	xdata = xdata + "<head>"
 	//------------------------------------------------------------------------
-	xdata = xdata + "<title>Test Page</title>"
+	xdata = xdata + "<title>Generate Static Site Info</title>"
 	//------------------------------------------------------------------------
-	xdata = LoopDisplay(xdata)
 
 	xdata = xdata + "<style>"
 	xdata = xdata + "body {"
@@ -204,18 +216,19 @@ func TestPage(xip string) string {
 	xdata = xdata + "</style>"
 	xdata = xdata + "</head>"
 	//------------------------------------------------------------------------
-	xdata = xdata + "<body onload='startLoop()'>"
-	xdata = xdata + "<H1>Test Page</H1>"
-	xdata = xdata + "<div id='txtloop'></div>"
+	xdata = xdata + "<body>"
+	xdata = xdata + "<H1>Generate Static Site Info</H1>"
 	//---------
 	xdata = xdata + "<center>"
-	xdata = xdata + "<p1>Go Web Server</p1>"
-	xdata = xdata + "<BR>"
-	xdata = xdata + "<p2>Go Web Server</p2>"
+
+	xdata = xdata + "  <A HREF='http://" + xip + ":8080/generatesite'> [ Start Generate ] </A> <BR><BR> "
+
+	xdata = xdata + "  <A HREF='http://" + xip + ":8080'> [ Return to Start Page ] </A>  <BR><BR>"
+
+	xdata = xdata + "<p1>Video Web Server</p1>"
 	xdata = xdata + "</center>"
 
 	//------------------------------------------------------------------------
-	xdata = xdata + "  <A HREF='http://" + xip + ":8080'> [ Return to Start Page ] </A>  "
 
 	//------------------------------------------------------------------------
 	xdata = xdata + " </body>"
@@ -225,7 +238,66 @@ func TestPage(xip string) string {
 }
 
 //----------------------------------------------------------------
-func DisplayPage() string {
+func GenerateSite(xip string) string {
+	//----------------------------------------------------------------------------
+
+	//----------------------------------------------------------------------------
+	xdata := "<!DOCTYPE html>"
+	xdata = xdata + "<html>"
+	xdata = xdata + "<head>"
+	//------------------------------------------------------------------------
+	xdata = xdata + "<title>Generate Static Site Complete</title>"
+	//------------------------------------------------------------------------
+
+	xdata = xdata + "<style>"
+	xdata = xdata + "body {"
+	xdata = xdata + "    background-color: green;"
+	xdata = xdata + "}"
+	xdata = xdata + "	h1 {"
+	xdata = xdata + "	color: white;"
+	xdata = xdata + "	text-align: center;"
+	xdata = xdata + "}"
+	xdata = xdata + "	p1 {"
+	xdata = xdata + "color: green;"
+	xdata = xdata + "font-family: verdana;"
+	xdata = xdata + "	font-size: 20px;"
+	xdata = xdata + "}"
+	xdata = xdata + "	p2 {"
+	xdata = xdata + "color: red;"
+	xdata = xdata + "font-family: verdana;"
+	xdata = xdata + "	font-size: 20px;"
+	xdata = xdata + "}"
+	xdata = xdata + "	div {"
+	xdata = xdata + "color: white;"
+	xdata = xdata + "font-family: verdana;"
+	xdata = xdata + "	font-size: 20px;"
+	xdata = xdata + "	text-align: center;"
+	xdata = xdata + "}"
+	xdata = xdata + "</style>"
+	xdata = xdata + "</head>"
+	//------------------------------------------------------------------------
+	xdata = xdata + "<body>"
+	xdata = xdata + "<H1>Generate Static Site Complete</H1>"
+	//---------
+	xdata = xdata + "<center>"
+
+	xdata = xdata + "  <A HREF='http://" + xip + ":8080'> [ Return to Start Page ] </A>  <BR><BR>"
+
+	xdata = xdata + "<p1>Video Web Server</p1>"
+	xdata = xdata + "</center>"
+
+	//------------------------------------------------------------------------
+
+	//------------------------------------------------------------------------
+	xdata = xdata + " </body>"
+	xdata = xdata + " </html>"
+
+	return xdata
+
+}
+
+//----------------------------------------------------------------
+func DisplayPage(xip string) string {
 	//---------------------------------------------------------------------------
 
 	//----------------------------------------------------------------------------
@@ -274,6 +346,8 @@ func DisplayPage() string {
 	xdata = xdata + "</center>"
 
 	//------------------------------------------------------------------------
+	xdata = xdata + "  <A HREF='http://" + xip + ":8080'> [ Return to Start Page ] </A>  "
+	xdata = xdata + "<BR><BR>"
 
 	//------------------------------------------------------------------------
 	xdata = xdata + " </body>"
@@ -361,7 +435,7 @@ func DateTimeDisplay(xdata string) string {
 	xdata = xdata + "       break;"
 	xdata = xdata + "}"
 	//  -------------------------------------------------------------------
-	xdata = xdata + "  document.getElementById('txtdt').innerHTML = ' - '+h + ':' + m + ':' + s+' '+ampm+' - '+day+', '+month+' '+dm+', '+yr;"
+	xdata = xdata + "  document.getElementById('txtdt').innerHTML =  '+day+', '+month+' '+dm+', '+yr' - '+h' + ':' + m + ':' + s+' '+ampm+;"
 	xdata = xdata + "  var t = setTimeout(startTime, 500);"
 	xdata = xdata + "}"
 	//----------
@@ -373,19 +447,6 @@ func DateTimeDisplay(xdata string) string {
 	xdata = xdata + "function checkTimeH(i) {"
 	xdata = xdata + "  if (i > 12) {i = i -12};"
 	xdata = xdata + "  return i;"
-	xdata = xdata + "}"
-	xdata = xdata + "</script>"
-	return xdata
-
-}
-
-func LoopDisplay(xdata string) string {
-	//------------------------------------------------------------------------
-	xdata = xdata + "<script>"
-	xdata = xdata + "function startLoop() {"
-	//  -------------------------------------------------------------------
-	xdata = xdata + "  document.getElementById('txtloop').innerHTML = Math.random();"
-	xdata = xdata + "  var t = setTimeout(startLoop, 500);"
 	xdata = xdata + "}"
 	xdata = xdata + "</script>"
 	return xdata
