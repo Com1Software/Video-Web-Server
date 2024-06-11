@@ -139,6 +139,7 @@ func AboutPage(xip string) string {
 	xdata = xdata + "<head>"
 	//------------------------------------------------------------------------
 	xdata = xdata + "<title>About Page</title>"
+	xdata = LoopDisplay(xdata)
 	//------------------------------------------------------------------------
 	xdata = DateTimeDisplay(xdata)
 	xdata = xdata + "<style>"
@@ -356,6 +357,19 @@ func DisplayPage(xip string) string {
 
 }
 
+func LoopDisplay(xdata string) string {
+	//------------------------------------------------------------------------
+	xdata = xdata + "<script>"
+	xdata = xdata + "function startLoop() {"
+	//  -------------------------------------------------------------------
+	xdata = xdata + "  document.getElementById('txtloop').innerHTML = Math.random();"
+	xdata = xdata + "  var t = setTimeout(startLoop, 500);"
+	xdata = xdata + "}"
+	xdata = xdata + "</script>"
+	return xdata
+
+}
+
 func DateTimeDisplay(xdata string) string {
 	//------------------------------------------------------------------------
 	xdata = xdata + "<script>"
@@ -435,7 +449,8 @@ func DateTimeDisplay(xdata string) string {
 	xdata = xdata + "       break;"
 	xdata = xdata + "}"
 	//  -------------------------------------------------------------------
-	xdata = xdata + "  document.getElementById('txtdt').innerHTML =  '+day+', '+month+' '+dm+', '+yr' - '+h' + ':' + m + ':' + s+' '+ampm+;"
+	xdata = xdata + "  document.getElementById('txtdt').innerHTML = day+', '+month+' '+dm+', '+yr+' - '+h + ':' + m + ':' + s+' '+ampm;"
+
 	xdata = xdata + "  var t = setTimeout(startTime, 500);"
 	xdata = xdata + "}"
 	//----------
