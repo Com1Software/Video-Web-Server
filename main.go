@@ -1,13 +1,21 @@
 package main
 
 import (
+	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 	"os/exec"
+	"path"
+	"path/filepath"
 	"runtime"
+	"strconv"
+	"strings"
 
 	"fmt"
 	"os"
+
+	asciistring "github.com/Com1Software/Go-ASCII-String-Package"
 )
 
 //----------------------------------------------------------------
@@ -40,18 +48,10 @@ func main() {
 		})
 		//------------------------------------------------Dymnamic Display Page Handler
 		http.HandleFunc("/display", func(w http.ResponseWriter, r *http.Request) {
-			xdata := DisplayPage(xip)
+			page := r.URL.Query().Get("page")
+			xdata := DisplayPage(xip, page)
 			fmt.Fprint(w, xdata)
-		})
-		//------------------------------------------------ Generate Static Site Information Handler
-		http.HandleFunc("/generate", func(w http.ResponseWriter, r *http.Request) {
-			xdata := Generate(xip)
-			fmt.Fprint(w, xdata)
-		})
-		//------------------------------------------------ Generate Static Site Information Handler
-		http.HandleFunc("/generatesite", func(w http.ResponseWriter, r *http.Request) {
-			xdata := GenerateSite(xip)
-			fmt.Fprint(w, xdata)
+
 		})
 
 		//------------------------------------------------- Static Handler Handler
@@ -118,9 +118,8 @@ func InitPage(xip string) string {
 	xdata = xdata + "<BR> Machine IP : " + xxip + "</p>"
 
 	xdata = xdata + "  <A HREF='http://" + xip + ":8080/about'> [ About ] </A>  "
-	xdata = xdata + "  <A HREF='http://" + xip + ":8080/display'> [ Dynamic Display ] </A>  "
+	xdata = xdata + "  <A HREF='http://" + xip + ":8080/display?page=1'> [ Display ] </A>  "
 	xdata = xdata + "  <A HREF='http://" + xip + ":8080/static/index.html'> [ Static Index ] </A>  "
-	xdata = xdata + "  <A HREF='http://" + xip + ":8080/generate'> [ Generate Site Info] </A>  "
 	xdata = xdata + "<BR><BR>Video Web Server...."
 
 	//------------------------------------------------------------------------
@@ -179,126 +178,7 @@ func AboutPage(xip string) string {
 }
 
 //----------------------------------------------------------------
-func Generate(xip string) string {
-	//---------------------------------------------------------------------------
-
-	//----------------------------------------------------------------------------
-	xdata := "<!DOCTYPE html>"
-	xdata = xdata + "<html>"
-	xdata = xdata + "<head>"
-	//------------------------------------------------------------------------
-	xdata = xdata + "<title>Generate Static Site Info</title>"
-	//------------------------------------------------------------------------
-
-	xdata = xdata + "<style>"
-	xdata = xdata + "body {"
-	xdata = xdata + "    background-color: grey;"
-	xdata = xdata + "}"
-	xdata = xdata + "	h1 {"
-	xdata = xdata + "	color: white;"
-	xdata = xdata + "	text-align: center;"
-	xdata = xdata + "}"
-	xdata = xdata + "	p1 {"
-	xdata = xdata + "color: green;"
-	xdata = xdata + "font-family: verdana;"
-	xdata = xdata + "	font-size: 20px;"
-	xdata = xdata + "}"
-	xdata = xdata + "	p2 {"
-	xdata = xdata + "color: red;"
-	xdata = xdata + "font-family: verdana;"
-	xdata = xdata + "	font-size: 20px;"
-	xdata = xdata + "}"
-	xdata = xdata + "	div {"
-	xdata = xdata + "color: white;"
-	xdata = xdata + "font-family: verdana;"
-	xdata = xdata + "	font-size: 20px;"
-	xdata = xdata + "	text-align: center;"
-	xdata = xdata + "}"
-	xdata = xdata + "</style>"
-	xdata = xdata + "</head>"
-	//------------------------------------------------------------------------
-	xdata = xdata + "<body>"
-	xdata = xdata + "<H1>Generate Static Site Info</H1>"
-	//---------
-	xdata = xdata + "<center>"
-
-	xdata = xdata + "  <A HREF='http://" + xip + ":8080/generatesite'> [ Start Generate ] </A> <BR><BR> "
-
-	xdata = xdata + "  <A HREF='http://" + xip + ":8080'> [ Return to Start Page ] </A>  <BR><BR>"
-
-	xdata = xdata + "<p1>Video Web Server</p1>"
-	xdata = xdata + "</center>"
-
-	//------------------------------------------------------------------------
-
-	//------------------------------------------------------------------------
-	xdata = xdata + " </body>"
-	xdata = xdata + " </html>"
-	return xdata
-
-}
-
-//----------------------------------------------------------------
-func GenerateSite(xip string) string {
-	//----------------------------------------------------------------------------
-
-	//----------------------------------------------------------------------------
-	xdata := "<!DOCTYPE html>"
-	xdata = xdata + "<html>"
-	xdata = xdata + "<head>"
-	//------------------------------------------------------------------------
-	xdata = xdata + "<title>Generate Static Site Complete</title>"
-	//------------------------------------------------------------------------
-
-	xdata = xdata + "<style>"
-	xdata = xdata + "body {"
-	xdata = xdata + "    background-color: green;"
-	xdata = xdata + "}"
-	xdata = xdata + "	h1 {"
-	xdata = xdata + "	color: white;"
-	xdata = xdata + "	text-align: center;"
-	xdata = xdata + "}"
-	xdata = xdata + "	p1 {"
-	xdata = xdata + "color: green;"
-	xdata = xdata + "font-family: verdana;"
-	xdata = xdata + "	font-size: 20px;"
-	xdata = xdata + "}"
-	xdata = xdata + "	p2 {"
-	xdata = xdata + "color: red;"
-	xdata = xdata + "font-family: verdana;"
-	xdata = xdata + "	font-size: 20px;"
-	xdata = xdata + "}"
-	xdata = xdata + "	div {"
-	xdata = xdata + "color: white;"
-	xdata = xdata + "font-family: verdana;"
-	xdata = xdata + "	font-size: 20px;"
-	xdata = xdata + "	text-align: center;"
-	xdata = xdata + "}"
-	xdata = xdata + "</style>"
-	xdata = xdata + "</head>"
-	//------------------------------------------------------------------------
-	xdata = xdata + "<body>"
-	xdata = xdata + "<H1>Generate Static Site Complete</H1>"
-	//---------
-	xdata = xdata + "<center>"
-
-	xdata = xdata + "  <A HREF='http://" + xip + ":8080'> [ Return to Start Page ] </A>  <BR><BR>"
-
-	xdata = xdata + "<p1>Video Web Server</p1>"
-	xdata = xdata + "</center>"
-
-	//------------------------------------------------------------------------
-
-	//------------------------------------------------------------------------
-	xdata = xdata + " </body>"
-	xdata = xdata + " </html>"
-
-	return xdata
-
-}
-
-//----------------------------------------------------------------
-func DisplayPage(xip string) string {
+func DisplayPage(xip string, page string) string {
 	//---------------------------------------------------------------------------
 
 	//----------------------------------------------------------------------------
@@ -311,10 +191,10 @@ func DisplayPage(xip string) string {
 	xdata = DateTimeDisplay(xdata)
 	xdata = xdata + "<style>"
 	xdata = xdata + "body {"
-	xdata = xdata + "    background-color: black;"
+	xdata = xdata + "    background-color: white;"
 	xdata = xdata + "}"
 	xdata = xdata + "	h1 {"
-	xdata = xdata + "	color: white;"
+	xdata = xdata + "	color: black;"
 	xdata = xdata + "	text-align: center;"
 	xdata = xdata + "}"
 	xdata = xdata + "	p1 {"
@@ -341,14 +221,124 @@ func DisplayPage(xip string) string {
 	xdata = xdata + "<div id='txtdt'></div>"
 	//---------
 	xdata = xdata + "<center>"
-	xdata = xdata + "<p1>Go Web Server</p1>"
+	xdata = xdata + "<p2>Video Web Server</p2>"
 	xdata = xdata + "<BR>"
-	xdata = xdata + "<p2>Go Web Server</p2>"
-	xdata = xdata + "</center>"
-
-	//------------------------------------------------------------------------
-	xdata = xdata + "  <A HREF='http://" + xip + ":8080'> [ Return to Start Page ] </A>  "
+	xdata = xdata + "<p1>Page " + page + "</p1>"
 	xdata = xdata + "<BR><BR>"
+	xdata = xdata + "</center>"
+	//------------------------------------------------------------------------
+	xdata = xdata + "<BR><BR>"
+
+	exefile := "/ffmpeg/bin/ffmpeg.exe"
+	exefilea := "/ffmpeg/bin/ffprobe.exe"
+	drive := "c"
+	wdir := drive + ":/tmp/"
+	if _, err := os.Stat(exefile); err == nil {
+		fmt.Printf("- Parser Detected")
+		files, err := ioutil.ReadDir(wdir)
+		if err != nil {
+			log.Fatal(err)
+		}
+		for _, file := range files {
+			if ValidFileType(strings.ToLower(path.Ext(file.Name()))) {
+				tfile := wdir + file.Name()
+				tnfile := fixFileName(tfile)
+				cmd := exec.Command(exefile, "-ss", "00:00:01", "-i", tnfile, "-vframes", "100", "-s", "128x96", fileNameWithoutExtension(tnfile)+"1.png")
+				if err := cmd.Run(); err != nil {
+					fmt.Printf("Command %s \n Error: %s\n", cmd, err)
+				}
+				cmd = exec.Command(exefile, "-ss", "00:00:10", "-i", tnfile, "-vframes", "100", "-s", "128x96", fileNameWithoutExtension(tnfile)+"2.png")
+				if err := cmd.Run(); err != nil {
+					fmt.Printf("Command %s \n Error: %s\n", cmd, err)
+				}
+				cmd = exec.Command(exefile, "-ss", "00:00:20", "-i", tnfile, "-vframes", "100", "-s", "128x96", fileNameWithoutExtension(tnfile)+"3.png")
+				if err := cmd.Run(); err != nil {
+					fmt.Printf("Command %s \n Error: %s\n", cmd, err)
+				}
+				xdata = xdata + "  <A HREF='file:///" + tnfile + "'>  [ " + file.Name() + " ] <BR> <IMG SRC=" + fileNameWithoutExtension(tnfile) + "1.png" + "  ALT=error> <IMG SRC=" + fileNameWithoutExtension(tnfile) + "2.png" + "  ALT=error> <IMG SRC=" + fileNameWithoutExtension(tnfile) + "3.png" + "  ALT=error> </A><BR> "
+				//-------------------------------------------------------------------------------------------------
+				bfile := "tmp.bat"
+				bdata := []byte(exefilea + " -i " + tnfile + " -show_entries stream=width,height -of csv=" + fmt.Sprintf("%q", "p=0") + ">tmp.txt")
+				err := os.WriteFile(bfile, bdata, 0644)
+				cmd = exec.Command(bfile)
+				if err = cmd.Run(); err != nil {
+					fmt.Printf("Command %s \n Error: %s\n", cmd, err)
+				}
+				dat := []byte("")
+				dat, err = os.ReadFile("tmp.txt")
+				tdata := string(dat)
+				tmp := strings.Split(tdata, ",")
+				xdata = xdata + "Frame width " + tmp[0] + "<BR>"
+				xdata = xdata + "Frame height " + tmp[1] + "<BR>"
+
+				//-------------------------------------------------------------------------------------------------
+				bdata = []byte(exefilea + " -i " + tnfile + " -show_entries format=duration -v quiet -of csv >tmp.csv")
+				err = os.WriteFile(bfile, bdata, 0644)
+				cmd = exec.Command(bfile)
+				if err = cmd.Run(); err != nil {
+					fmt.Printf("Command %s \n Error: %s\n", cmd, err)
+				}
+				dat = []byte("")
+				dat, err = os.ReadFile("tmp.csv")
+				tdata = string(dat)
+				tmp = strings.Split(tdata, ",")
+				tmpa := strings.Split(tmp[1], ".")
+				t := tmpa[0]
+				i, _ := strconv.Atoi(t)
+				mc := 0
+				m := 0
+				sc := 0
+				for x := 0; x < i; x++ {
+					mc++
+					sc++
+					if mc > 59 {
+						m++
+						mc = 0
+						sc = 0
+					}
+
+				}
+				xdata = xdata + "Length  " + strconv.Itoa(m) + ":" + strconv.Itoa(sc) + " <BR>"
+				//-------------------------------------------------------------------------------------------------
+				bdata = []byte(exefilea + " -i " + tnfile + " -show_entries stream=r_frame_rate  -of csv" + ">tmp.csv")
+
+				err = os.WriteFile(bfile, bdata, 0644)
+				cmd = exec.Command(bfile)
+				if err = cmd.Run(); err != nil {
+					fmt.Printf("Command %s \n Error: %s\n", cmd, err)
+				}
+				dat = []byte("")
+				dat, err = os.ReadFile("tmp.csv")
+				tdata = string(dat)
+				fr := ParseFrameRate(tdata)
+				xdata = xdata + "Frames per second  " + fr + " <BR>"
+
+				//-------------------------------------------------------------------------------------------------
+				bdata = []byte(exefilea + " -i " + tnfile + "  -show_entries stream=bit_rate -v quiet -of csv >tmp.csv")
+				err = os.WriteFile(bfile, bdata, 0644)
+				cmd = exec.Command(bfile)
+				if err = cmd.Run(); err != nil {
+					fmt.Printf("Command %s \n Error: %s\n", cmd, err)
+				}
+				dat = []byte("")
+				dat, err = os.ReadFile("tmp.csv")
+				tdata = string(dat)
+				br := ParseBitRate(tdata)
+				xdata = xdata + "Bit Rate " + br + " <BR>"
+				xdata = xdata + "<BR><BR>"
+
+			}
+		}
+
+	} else {
+		fmt.Println(err)
+	}
+	//------------------------------------------------------------------------
+	xdata = xdata + "<center>"
+	xdata = xdata + "<BR><BR>"
+	xdata = xdata + "  <A HREF='http://" + xip + ":8080'> [ Return to Start Page ] </A>  "
+
+	xdata = xdata + "</center>"
 
 	//------------------------------------------------------------------------
 	xdata = xdata + " </body>"
@@ -478,4 +468,120 @@ func GetOutboundIP() net.IP {
 	localAddr := conn.LocalAddr().(*net.UDPAddr)
 
 	return localAddr.IP
+}
+
+func fileNameWithoutExtension(fileName string) string {
+	return strings.TrimSuffix(fileName, filepath.Ext(fileName))
+}
+
+func fixFileName(fileName string) string {
+	newName := ""
+	tmp := strings.Split(fileName, " ")
+	for x := 0; x < len(tmp); x++ {
+		newName = newName + tmp[x]
+	}
+	err := os.Rename(fileName, newName)
+	if err != nil {
+		fmt.Println("Error renaming file:", err)
+	} else {
+		fmt.Println("File renamed successfully")
+	}
+	return newName
+}
+
+func ValidFileType(fileExt string) bool {
+	rtn := false
+	switch {
+	case fileExt == ".mp4":
+		rtn = true
+	case fileExt == ".avi":
+		rtn = true
+	case fileExt == ".wmv":
+		rtn = true
+	}
+	return rtn
+}
+
+func ParseFrameRate(data string) string {
+	rtn := ""
+	chr := ""
+	do := false
+	pass := 1
+	v1 := ""
+	v2 := ""
+	add := true
+	ascval := 0
+	for x := 0; x < len(data); x++ {
+		chr = data[x : x+1]
+		add = true
+		ascval = asciistring.StringToASCII(chr)
+		if ascval == 13 {
+			add = false
+			numerator, _ := strconv.Atoi(v1)
+			denominator, _ := strconv.Atoi(v2)
+			if denominator > 0 {
+				fps := numerator / denominator
+				// fmt.Printf("The frame rate is: %.2f fps\n", fps)
+				rtn = strconv.Itoa(fps)
+			}
+		}
+		if ascval == 10 {
+			add = false
+			pass = 1
+			do = false
+		}
+		if chr == "," {
+			do = true
+			add = false
+		}
+		if chr == "/" {
+			pass = 2
+			add = false
+		}
+		if do {
+			if add {
+				if pass == 1 {
+					v1 = v1 + chr
+				}
+				if pass == 2 {
+					v2 = v2 + chr
+				}
+			}
+		}
+	}
+	return rtn
+}
+
+func ParseBitRate(data string) string {
+	rtn := ""
+	chr := ""
+	do := false
+	add := true
+	pass := 1
+	ascval := 0
+	for x := 0; x < len(data); x++ {
+		chr = data[x : x+1]
+		add = true
+		ascval = asciistring.StringToASCII(chr)
+		if ascval == 13 {
+			add = false
+		}
+		if ascval == 10 {
+			add = false
+			do = false
+			pass = 2
+		}
+		if chr == "," {
+			do = true
+			add = false
+		}
+		if do {
+			if add {
+				if pass == 2 {
+					rtn = rtn + chr
+				}
+			}
+		}
+	}
+	return rtn
 }
