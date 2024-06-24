@@ -49,7 +49,7 @@ func main() {
 		//------------------------------------------------Dymnamic Display Page Handler
 		http.HandleFunc("/display", func(w http.ResponseWriter, r *http.Request) {
 			page := r.URL.Query().Get("page")
-			xdata := DisplayPage(xip, page)
+			xdata := DisplayPage(xip, port, page)
 			fmt.Fprint(w, xdata)
 
 		})
@@ -178,7 +178,7 @@ func AboutPage(xip string) string {
 }
 
 //----------------------------------------------------------------
-func DisplayPage(xip string, page string) string {
+func DisplayPage(xip string, port string, page string) string {
 	//---------------------------------------------------------------------------
 
 	//----------------------------------------------------------------------------
@@ -227,8 +227,6 @@ func DisplayPage(xip string, page string) string {
 	xdata = xdata + "<BR><BR>"
 	xdata = xdata + "</center>"
 	//------------------------------------------------------------------------
-	xdata = xdata + "<BR><BR>"
-
 	exefile := "/ffmpeg/bin/ffmpeg.exe"
 	exefilea := "/ffmpeg/bin/ffprobe.exe"
 	drive := "c"
@@ -243,29 +241,30 @@ func DisplayPage(xip string, page string) string {
 			if ValidFileType(strings.ToLower(path.Ext(file.Name()))) {
 				tfile := wdir + file.Name()
 				tnfile := fixFileName(tfile)
-				cmd := exec.Command(exefile, "-ss", "00:00:01", "-i", tnfile, "-vframes", "100", "-s", "128x96", fileNameWithoutExtension(tnfile)+"1.png")
+
+				cmd := exec.Command(exefile, "-ss", "00:00:01", "-i", tnfile, "-vframes", "100", "-s", "128x96", "static/"+filepath.Base(fileNameWithoutExtension(tnfile))+"1.png")
 				if err := cmd.Run(); err != nil {
 					fmt.Printf("Command %s \n Error: %s\n", cmd, err)
 				}
-				cmd = exec.Command(exefile, "-ss", "00:00:10", "-i", tnfile, "-vframes", "100", "-s", "128x96", fileNameWithoutExtension(tnfile)+"2.png")
+				cmd = exec.Command(exefile, "-ss", "00:00:10", "-i", tnfile, "-vframes", "100", "-s", "128x96", "static/"+filepath.Base(fileNameWithoutExtension(tnfile))+"2.png")
 				if err := cmd.Run(); err != nil {
 					fmt.Printf("Command %s \n Error: %s\n", cmd, err)
 				}
-				cmd = exec.Command(exefile, "-ss", "00:00:20", "-i", tnfile, "-vframes", "100", "-s", "128x96", fileNameWithoutExtension(tnfile)+"3.png")
+				cmd = exec.Command(exefile, "-ss", "00:00:20", "-i", tnfile, "-vframes", "100", "-s", "128x96", "static/"+filepath.Base(fileNameWithoutExtension(tnfile))+"3.png")
 				if err := cmd.Run(); err != nil {
 					fmt.Printf("Command %s \n Error: %s\n", cmd, err)
 				}
-				xdata = xdata + "  <A HREF='file:///" + tnfile + "'>  [ " + file.Name() + " ] <BR> <IMG SRC=" + fileNameWithoutExtension(tnfile) + "1.png" + "  ALT=error> <IMG SRC=" + fileNameWithoutExtension(tnfile) + "2.png" + "  ALT=error> <IMG SRC=" + fileNameWithoutExtension(tnfile) + "3.png" + "  ALT=error> </A><BR> "
+				xdata = xdata + "  <A HREF='file:///" + tnfile + "'>  [ " + file.Name() + " ] <BR> <IMG SRC=static/" + filepath.Base(fileNameWithoutExtension(tnfile)) + "1.png ALT=test123> <IMG SRC=static/" + filepath.Base(fileNameWithoutExtension(tnfile)) + "2.png  ALT=xerror> <IMG SRC=static/" + filepath.Base(fileNameWithoutExtension(tnfile)) + "3.png  ALT=error> </A><BR> "
 				//-------------------------------------------------------------------------------------------------
 				bfile := "tmp.bat"
-				bdata := []byte(exefilea + " -i " + tnfile + " -show_entries stream=width,height -of csv=" + fmt.Sprintf("%q", "p=0") + ">tmp.txt")
+				bdata := []byte(exefilea + " -i " + tnfile + " -show_entries stream=width,height -of csv=" + fmt.Sprintf("%q", "p=0") + ">tmp.csv")
 				err := os.WriteFile(bfile, bdata, 0644)
 				cmd = exec.Command(bfile)
 				if err = cmd.Run(); err != nil {
 					fmt.Printf("Command %s \n Error: %s\n", cmd, err)
 				}
 				dat := []byte("")
-				dat, err = os.ReadFile("tmp.txt")
+				dat, err = os.ReadFile("tmp.csv")
 				tdata := string(dat)
 				tmp := strings.Split(tdata, ",")
 				xdata = xdata + "Frame width " + tmp[0] + "<BR>"
