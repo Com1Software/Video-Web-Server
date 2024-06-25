@@ -240,6 +240,7 @@ func DisplayPage(xip string, port string, page string, exefile string, exefilea 
 	xdata = xdata + "</center>"
 	//------------------------------------------------------------------------
 	pgsize := 5
+	maxsel := 5
 	pg, _ := strconv.Atoi(page)
 	if _, err := os.Stat(exefile); err == nil {
 		fmt.Printf("- Parser Detected")
@@ -275,7 +276,9 @@ func DisplayPage(xip string, port string, page string, exefile string, exefilea 
 				pgselect = pgselect + "[<B>" + strconv.Itoa(pg) + "</B>]"
 			} else {
 
-				pgselect = pgselect + "  <A HREF='http://" + xip + ":8080/display?page=" + strconv.Itoa(x+1) + "'> [ " + strconv.Itoa(x+1) + " ] </A>  "
+				if x < maxsel {
+					pgselect = pgselect + "  <A HREF='http://" + xip + ":8080/display?page=" + strconv.Itoa(x+1) + "'> [ " + strconv.Itoa(x+1) + " ] </A>  "
+				}
 			}
 			if pgcnt > 1 {
 				if x == pgcnt {
