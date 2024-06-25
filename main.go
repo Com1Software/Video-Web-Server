@@ -24,6 +24,10 @@ func main() {
 	fmt.Printf("Operating System : %s\n", runtime.GOOS)
 	xip := fmt.Sprintf("%s", GetOutboundIP())
 	port := "8080"
+	exefile := "/ffmpeg/bin/ffmpeg.exe"
+	exefilea := "/ffmpeg/bin/ffprobe.exe"
+	drive := "c"
+	wdir := drive + ":/tmp/"
 	switch {
 	//-------------------------------------------------------------
 	case len(os.Args) == 2:
@@ -49,7 +53,15 @@ func main() {
 		//------------------------------------------------Dymnamic Display Page Handler
 		http.HandleFunc("/display", func(w http.ResponseWriter, r *http.Request) {
 			page := r.URL.Query().Get("page")
-			xdata := DisplayPage(xip, port, page)
+			xdata := DisplayPage(xip, port, page, exefile, exefilea, drive, wdir)
+			fmt.Fprint(w, xdata)
+
+		})
+
+		//------------------------------------------------Play Video Page Handler
+		http.HandleFunc("/playvideo", func(w http.ResponseWriter, r *http.Request) {
+			video := r.URL.Query().Get("video")
+			xdata := PlayVideoPage(xip, port, video, exefile, exefilea, drive, wdir)
 			fmt.Fprint(w, xdata)
 
 		})
@@ -178,7 +190,7 @@ func AboutPage(xip string) string {
 }
 
 //----------------------------------------------------------------
-func DisplayPage(xip string, port string, page string) string {
+func DisplayPage(xip string, port string, page string, exefile string, exefilea string, drive string, wdir string) string {
 	//---------------------------------------------------------------------------
 	pgselect := ""
 	//----------------------------------------------------------------------------
@@ -227,12 +239,8 @@ func DisplayPage(xip string, port string, page string) string {
 	xdata = xdata + "<BR>"
 	xdata = xdata + "</center>"
 	//------------------------------------------------------------------------
-	exefile := "/ffmpeg/bin/ffmpeg.exe"
-	exefilea := "/ffmpeg/bin/ffprobe.exe"
-	drive := "c"
 	pgsize := 5
 	pg, _ := strconv.Atoi(page)
-	wdir := drive + ":/tmp/"
 	if _, err := os.Stat(exefile); err == nil {
 		fmt.Printf("- Parser Detected")
 		files, err := ioutil.ReadDir(wdir)
@@ -301,7 +309,18 @@ func DisplayPage(xip string, port string, page string) string {
 					xdata = xdata + "File # " + strconv.Itoa(fc)
 					tfile := wdir + file.Name()
 					tnfile := fixFileName(tfile)
-
+					e := os.Remove("static/" + strconv.Itoa(pfc) + "1.png")
+					if e != nil {
+						fmt.Printf("Delete Error: %s\n", e)
+					}
+					e = os.Remove("static/" + strconv.Itoa(pfc) + "2.png")
+					if e != nil {
+						fmt.Printf("Delete Error: %s\n", e)
+					}
+					e = os.Remove("static/" + strconv.Itoa(pfc) + "3.png")
+					if e != nil {
+						fmt.Printf("Delete Error: %s\n", e)
+					}
 					cmd := exec.Command(exefile, "-ss", "00:00:01", "-i", tnfile, "-vframes", "100", "-s", "128x96", "static/"+strconv.Itoa(pfc)+"1.png")
 					if err := cmd.Run(); err != nil {
 						fmt.Printf("Command %s \n Error: %s\n", cmd, err)
@@ -314,7 +333,7 @@ func DisplayPage(xip string, port string, page string) string {
 					if err := cmd.Run(); err != nil {
 						fmt.Printf("Command %s \n Error: %s\n", cmd, err)
 					}
-					xdata = xdata + "  <A HREF='file:///" + tnfile + "'>  [ " + file.Name() + " ] <BR> <IMG SRC=static/" + strconv.Itoa(pfc) + "1.png ALT=test123> <IMG SRC=static/" + strconv.Itoa(pfc) + "2.png  ALT=xerror> <IMG SRC=static/" + strconv.Itoa(pfc) + "3.png  ALT=error> </A><BR> "
+					xdata = xdata + " <A HREF='http://" + xip + ":8080/playvideo?video=" + file.Name() + "'>  [ " + file.Name() + " ] <BR> <IMG SRC=static/" + strconv.Itoa(pfc) + "1.png ALT=test123> <IMG SRC=static/" + strconv.Itoa(pfc) + "2.png  ALT=xerror> <IMG SRC=static/" + strconv.Itoa(pfc) + "3.png  ALT=error> </A><BR> "
 					//-------------------------------------------------------------------------------------------------
 					bfile := "tmp.bat"
 					bdata := []byte(exefilea + " -i " + tnfile + " -show_entries stream=width,height -of csv=" + fmt.Sprintf("%q", "p=0") + ">tmp.csv")
@@ -405,6 +424,91 @@ func DisplayPage(xip string, port string, page string) string {
 	//------------------------------------------------------------------------
 	xdata = xdata + " </body>"
 	xdata = xdata + " </html>"
+	return xdata
+
+}
+
+//----------------------------------------------------------------
+func PlayVideoPage(xip string, port string, video string, exefile string, exefilea string, drive string, wdir string) string {
+	//---------------------------------------------------------------------------
+	//----------------------------------------------------------------------------
+	xdata := "<!DOCTYPE html>"
+	xdata = xdata + "<html>"
+	xdata = xdata + "<head>"
+	//------------------------------------------------------------------------
+	xdata = xdata + "<title>Play Video Page</title>"
+	//------------------------------------------------------------------------
+	xdata = DateTimeDisplay(xdata)
+	xdata = xdata + "<style>"
+	xdata = xdata + "body {"
+	xdata = xdata + "    background-color: white;"
+	xdata = xdata + "}"
+	xdata = xdata + "	h1 {"
+	xdata = xdata + "	color: black;"
+	xdata = xdata + "	text-align: center;"
+	xdata = xdata + "}"
+	xdata = xdata + "	p1 {"
+	xdata = xdata + "color: green;"
+	xdata = xdata + "font-family: verdana;"
+	xdata = xdata + "	font-size: 20px;"
+	xdata = xdata + "}"
+	xdata = xdata + "	p2 {"
+	xdata = xdata + "color: red;"
+	xdata = xdata + "font-family: verdana;"
+	xdata = xdata + "	font-size: 20px;"
+	xdata = xdata + "}"
+	xdata = xdata + "	div {"
+	xdata = xdata + "color: white;"
+	xdata = xdata + "font-family: verdana;"
+	xdata = xdata + "	font-size: 20px;"
+	xdata = xdata + "	text-align: center;"
+	xdata = xdata + "}"
+	xdata = xdata + "</style>"
+	xdata = xdata + "</head>"
+	//------------------------------------------------------------------------
+	xdata = xdata + "<body onload='startTime()'>"
+	xdata = xdata + "<H1>Play Video Page</H1>"
+	xdata = xdata + "<div id='txtdt'></div>"
+	//---------
+	xdata = xdata + "<center>"
+	xdata = xdata + "<p2>Video Web Server</p2>"
+	xdata = xdata + "<BR>"
+	xdata = xdata + "<p1>Video " + video + "</p1>"
+	xdata = xdata + "<BR>"
+	xdata = xdata + "</center>"
+	//------------------------------------------------------------------------
+	//------------------------------------------------------------------------
+	tfile := wdir + video
+	tnfile := fixFileName(tfile)
+	e := os.Remove("static/" + video + ".png")
+	if e != nil {
+		fmt.Printf("Delete Error: %s\n", e)
+	}
+	cmd := exec.Command(exefile, "-ss", "00:00:01", "-i", tnfile, "-vframes", "100", "-s", "600x400", "static/"+video+".png")
+	if err := cmd.Run(); err != nil {
+		fmt.Printf("Command %s \n Error: %s\n", cmd, err)
+	}
+	xdata = xdata + "<center>"
+	xdata = xdata + " <A HREF='http://" + xip + ":8080/static/tmp.mp4'>  [ " + video + " ] <BR> <IMG SRC=static/" + video + ".png ALT=test123>"
+	xdata = xdata + "</center>"
+	//------------------------------------------------------------------------
+	xdata = xdata + " </body>"
+	xdata = xdata + " </html>"
+	//------------------------------------------------------------------------
+	//ft := strings.ToLower(path.Ext(tnfile))
+	// fmt.Println(ft)
+	e = os.Remove("static/tmp.mp4")
+	if e != nil {
+		fmt.Printf("Delete Error: %s\n", e)
+	}
+	cmd = exec.Command(exefile, "-i", tnfile, "-strict", "-2", "static/tmp.mp4")
+	fmt.Println(cmd)
+	if err := cmd.Run(); err != nil {
+		fmt.Printf("Command %s \n Error: %s\n", cmd, err)
+	}
+
+	//------------------------------------------------------------------------
+
 	return xdata
 
 }
