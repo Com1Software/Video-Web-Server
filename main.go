@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io"
 	"io/ioutil"
 	"log"
 	"net"
@@ -28,6 +29,8 @@ func main() {
 	exefilea := "/ffmpeg/bin/ffprobe.exe"
 	drive := "c"
 	wdir := drive + ":/tmp/"
+	pgsize := 25
+	maxsel := 1000
 	switch {
 	//-------------------------------------------------------------
 	case len(os.Args) == 2:
@@ -53,7 +56,7 @@ func main() {
 		//------------------------------------------------Dymnamic Display Page Handler
 		http.HandleFunc("/display", func(w http.ResponseWriter, r *http.Request) {
 			page := r.URL.Query().Get("page")
-			xdata := DisplayPage(xip, port, page, exefile, exefilea, drive, wdir)
+			xdata := DisplayPage(xip, port, page, exefile, exefilea, drive, wdir, pgsize, maxsel)
 			fmt.Fprint(w, xdata)
 
 		})
@@ -190,7 +193,7 @@ func AboutPage(xip string) string {
 }
 
 //----------------------------------------------------------------
-func DisplayPage(xip string, port string, page string, exefile string, exefilea string, drive string, wdir string) string {
+func DisplayPage(xip string, port string, page string, exefile string, exefilea string, drive string, wdir string, pgsize int, maxsel int) string {
 	//---------------------------------------------------------------------------
 	pgselect := ""
 	//----------------------------------------------------------------------------
@@ -239,8 +242,7 @@ func DisplayPage(xip string, port string, page string, exefile string, exefilea 
 	xdata = xdata + "<BR>"
 	xdata = xdata + "</center>"
 	//------------------------------------------------------------------------
-	pgsize := 5
-	maxsel := 5
+
 	pg, _ := strconv.Atoi(page)
 	if _, err := os.Stat(exefile); err == nil {
 		fmt.Printf("- Parser Detected")
@@ -504,12 +506,19 @@ func PlayVideoPage(xip string, port string, video string, exefile string, exefil
 	if e != nil {
 		fmt.Printf("Delete Error: %s\n", e)
 	}
-	cmd = exec.Command(exefile, "-i", tnfile, "-strict", "-2", "static/tmp.mp4")
-	fmt.Println(cmd)
-	if err := cmd.Run(); err != nil {
-		fmt.Printf("Command %s \n Error: %s\n", cmd, err)
-	}
+	if strings.ToLower(path.Ext(tnfile)) == ".mp4" {
 
+		c, ce := copy(tnfile, "static/tmp.mp4")
+		fmt.Printf("%d %e \n", c, ce)
+
+	} else {
+
+		cmd = exec.Command(exefile, "-i", tnfile, "-strict", "-2", "static/tmp.mp4")
+		fmt.Println(cmd)
+		if err := cmd.Run(); err != nil {
+			fmt.Printf("Command %s \n Error: %s\n", cmd, err)
+		}
+	}
 	//------------------------------------------------------------------------
 
 	return xdata
@@ -641,6 +650,30 @@ func GetOutboundIP() net.IP {
 
 func fileNameWithoutExtension(fileName string) string {
 	return strings.TrimSuffix(fileName, filepath.Ext(fileName))
+}
+func copy(src, dst string) (int64, error) {
+	sourceFileStat, err := os.Stat(src)
+	if err != nil {
+		return 0, err
+	}
+
+	if !sourceFileStat.Mode().IsRegular() {
+		return 0, fmt.Errorf("%s is not a regular file", src)
+	}
+
+	source, err := os.Open(src)
+	if err != nil {
+		return 0, err
+	}
+	defer source.Close()
+
+	destination, err := os.Create(dst)
+	if err != nil {
+		return 0, err
+	}
+	defer destination.Close()
+	nBytes, err := io.Copy(destination, source)
+	return nBytes, err
 }
 
 func fixFileName(fileName string) string {
