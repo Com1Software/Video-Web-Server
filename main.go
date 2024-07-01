@@ -32,7 +32,7 @@ func main() {
 	pgsize := 10
 	maxsel := 1000
 	display := 0
-	subdir := false
+	subdir := true
 	switch {
 	//-------------------------------------------------------------
 	case len(os.Args) == 2:
@@ -121,7 +121,8 @@ func InitPage(xip string) string {
 	//------------------------------------------------------------------------
 
 	xdata = xdata + "<body>"
-	xdata = xdata + "<H1>Video Web Server.</H1>"
+	xdata = xdata + "<center>"
+	xdata = xdata + "<H1>Video Web Server</H1>"
 	//---------
 	host, _ := os.Hostname()
 	addrs, _ := net.LookupIP(host)
@@ -139,9 +140,11 @@ func InitPage(xip string) string {
 	xdata = xdata + "  <A HREF='http://" + xip + ":8080/about'> [ About ] </A>  "
 	xdata = xdata + "  <A HREF='http://" + xip + ":8080/display?page=1'> [ Display ] </A>  "
 	xdata = xdata + "  <A HREF='http://" + xip + ":8080/static/index.html'> [ Static Index ] </A>  "
-	xdata = xdata + "<BR><BR>Video Web Server...."
+	xdata = xdata + "<BR><BR>Video Web Server"
 
 	//------------------------------------------------------------------------
+
+	xdata = xdata + "</center>"
 	xdata = xdata + " </body>"
 	xdata = xdata + " </html>"
 	return xdata
@@ -149,8 +152,6 @@ func InitPage(xip string) string {
 
 //----------------------------------------------------------------
 func AboutPage(xip string) string {
-	//---------------------------------------------------------------------------
-
 	//----------------------------------------------------------------------------
 	xdata := "<!DOCTYPE html>"
 	xdata = xdata + "<html>"
@@ -221,50 +222,18 @@ func DisplayPage(subdir bool, xip string, port string, page string, sdir string,
 		xdata = xdata + "</style>"
 
 	}
-
-	//------------------------------------------------------------------------
-	// xdata = xdata + "<title>Display Page</title>"
-	//------------------------------------------------------------------------
-	// xdata = DateTimeDisplay(xdata)
-	//xdata = xdata + "<style>"
-	//xdata = xdata + "body {"
-	//xdata = xdata + "    background-color: white;"
-	//xdata = xdata + "}"
-	//xdata = xdata + "	h1 {"
-	//xdata = xdata + "	color: black;"
-	//xdata = xdata + "	text-align: center;"
-	//xdata = xdata + "}"
-	//xdata = xdata + "	p1 {"
-	//xdata = xdata + "color: green;"
-	//xdata = xdata + "font-family: verdana;"
-	//xdata = xdata + "	font-size: 20px;"
-	//xdata = xdata + "}"
-	//xdata = xdata + "	p2 {"
-	//xdata = xdata + "color: red;"
-	//xdata = xdata + "font-family: verdana;"
-	//xdata = xdata + "	font-size: 20px;"
-	//xdata = xdata + "}"
-	//xdata = xdata + "	div {"
-	//xdata = xdata + "color: white;"
-	//xdata = xdata + "font-family: verdana;"
-	//xdata = xdata + "	font-size: 20px;"
-	//xdata = xdata + "	text-align: center;"
-	//xdata = xdata + "}"
-	//xdata = xdata + "</style>"
 	xdata = xdata + "</head>"
 	//------------------------------------------------------------------------
 	xdata = xdata + "<body onload='startTime()'>"
-	xdata = xdata + "<H1>Display Page</H1>"
-	xdata = xdata + "<div id='txtdt'></div>"
-	//---------
 	xdata = xdata + "<center>"
+	xdata = xdata + "<H1>Video Display Page</H1>"
+	xdata = xdata + "<div id='txtdt'></div>"
 	xdata = xdata + "<p2>Video Web Server</p2>"
 	xdata = xdata + "<BR>"
 	xdata = xdata + "<p1>Page " + page + "</p1>"
 	xdata = xdata + "<BR>"
 	xdata = xdata + "</center>"
 	//------------------------------------------------------------------------
-
 	pg, _ := strconv.Atoi(page)
 	if _, err := os.Stat(exefile); err == nil {
 		fmt.Printf("- Parser Detected")
@@ -323,38 +292,37 @@ func DisplayPage(subdir bool, xip string, port string, page string, sdir string,
 		xdata = xdata + "<BR>"
 		xdata = xdata + "</center>"
 		pfc = 0
-
+		xdata = xdata + "<center>"
 		xdata = xdata + "<TABLE>"
 		xdata = xdata + "<TD valign='top' with='200'>"
-		xdata = xdata + "Folder<BR>"
-
+		xdata = xdata + "<center>"
+		xdata = xdata + "<FIELDSET>"
+		xdata = xdata + "<LEGEND>"
+		xdata = xdata + " Folders "
+		xdata = xdata + "</LEGEND>"
 		if subdir {
 			entries, err := os.ReadDir(wdir + "./")
 			if err != nil {
 				log.Fatal(err)
 			}
-
 			for _, e := range entries {
-				fmt.Println(e.Name())
-				//	xdata = xdata + e.Name() + "<BR>"
-				xdata = xdata + "  <A HREF='http://" + xip + ":8080/display?page=1&sdir=" + e.Name() + "'> " + e.Name() + " </A><BR>  "
-				//	files, err = ioutil.ReadDir(wdir + e.Name())
-				//		if err != nil {
-				//			log.Fatal(err)
-				//		}
-				//		dfc := 0
-				//		for _, file := range files {
-				//			if ValidFileType(strings.ToLower(path.Ext(file.Name()))) {
-				//				dfc++
-				//			}
-				//		}
-				//		xdata = xdata + "(" + strconv.Itoa(dfc) + ")"
+				if CheckforFile(nsd+e.Name()) == false {
+					xdata = xdata + "  <A HREF='http://" + xip + ":8080/display?page=1&sdir=" + e.Name() + "'> " + e.Name() + " </A><BR>  "
 
+				}
 			}
 		}
-
+		xdata = xdata + "</FIELDSET>"
+		xdata = xdata + "</center>"
+		xdata = xdata + "</TD>"
+		xdata = xdata + "<TD with='100'>"
 		xdata = xdata + "</TD>"
 		xdata = xdata + "<TD with='300'>"
+		xdata = xdata + "<center>"
+		xdata = xdata + "<FIELDSET>"
+		xdata = xdata + "<LEGEND>"
+		xdata = xdata + sdir
+		xdata = xdata + "</LEGEND>"
 		pgcnt = 1
 		fc = 0
 		for _, file := range files {
@@ -367,25 +335,47 @@ func DisplayPage(subdir bool, xip string, port string, page string, sdir string,
 					pgcnt++
 				}
 				if pgcnt == pg {
-
 					tfile := nsd + file.Name()
 					tnfile := fixFileName(tfile)
 					switch {
 					case display == 0:
-						xdata = xdata + BasicDisplay(exefile, tnfile, file.Name(), fc, pfc, file.Name(), xip, sdir)
+						xdata = xdata + BasicDisplay(exefile, exefilea, tnfile, file.Name(), fc, pfc, file.Name(), xip, sdir)
 					case display == 1:
 						xdata = xdata + ImageScrollDisplay(exefile, tnfile, file.Name(), fc, pfc, file.Name(), xip, sdir)
 					}
 					//-------------------------------------------------------------------------------------------------
+					xdata = xdata + "<TABLE>"
+					xdata = xdata + "<TD with='200'>"
+					xdata = xdata + "<center>"
+					xdata = xdata + " <A HREF='http://" + xip + ":8080'> [ Delete Video ] </A>  "
+					xdata = xdata + "</center>"
+					xdata = xdata + "</TD>"
+					xdata = xdata + "<TD with='200'>"
+					xdata = xdata + " -------------- "
+					xdata = xdata + "</TD>"
+					xdata = xdata + "<TD with='400'>"
+					xdata = xdata + "<center>"
 					xdata = xdata + FileData(exefilea, tnfile, file.Name())
-					xdata = xdata + "<BR><BR>"
-
+					xdata = xdata + "</center>"
+					xdata = xdata + "</TD>"
+					xdata = xdata + "<TD with='200'>"
+					xdata = xdata + " -------------- "
+					xdata = xdata + "</TD>"
+					xdata = xdata + "<TD with='200'>"
+					xdata = xdata + "<center>"
+					xdata = xdata + " <A HREF='http://" + xip + ":8080'> [ Move Video ] </A>  "
+					xdata = xdata + "</center>"
+					xdata = xdata + "</TD>"
+					xdata = xdata + "</TABLE>"
+					xdata = xdata + "<HR>"
 				}
 			}
 		}
+		xdata = xdata + "</FIELDSET>"
+		xdata = xdata + "</center>"
 		xdata = xdata + "</TD>"
 		xdata = xdata + "</TABLE>"
-
+		xdata = xdata + "</center>"
 	} else {
 		fmt.Println(err)
 	}
@@ -395,9 +385,7 @@ func DisplayPage(subdir bool, xip string, port string, page string, sdir string,
 	xdata = xdata + pgselect
 	xdata = xdata + "<BR><BR>"
 	xdata = xdata + " <A HREF='http://" + xip + ":8080'> [ Return to Start Page ] </A>  "
-
 	xdata = xdata + "</center>"
-
 	//------------------------------------------------------------------------
 	xdata = xdata + " </body>"
 	xdata = xdata + " </html>"
@@ -849,9 +837,16 @@ func FileData(exefilea string, tnfile string, fileName string) string {
 
 	return xdata
 }
-func BasicDisplay(exefile string, tnfile string, fileName string, fc int, pfc int, fn string, xip string, sdir string) string {
+func BasicDisplay(exefile string, exefilea string, tnfile string, fileName string, fc int, pfc int, fn string, xip string, sdir string) string {
 	xdata := ""
-	xdata = xdata + "File # " + strconv.Itoa(fc)
+	tp1 := TimePosition(exefilea, tnfile, 1)
+	tp2 := TimePosition(exefilea, tnfile, 2)
+	tp3 := TimePosition(exefilea, tnfile, 3)
+	tp4 := TimePosition(exefilea, tnfile, 4)
+	tp5 := TimePosition(exefilea, tnfile, 5)
+	tp6 := TimePosition(exefilea, tnfile, 6)
+
+	xdata = xdata + "File # " + strconv.Itoa(fc) + "<BR>"
 
 	e := os.Remove("static/" + strconv.Itoa(pfc) + "1.png")
 	if e != nil {
@@ -865,19 +860,45 @@ func BasicDisplay(exefile string, tnfile string, fileName string, fc int, pfc in
 	if e != nil {
 		fmt.Printf("Delete Error: %s\n", e)
 	}
-	cmd := exec.Command(exefile, "-ss", "00:00:01", "-i", tnfile, "-vframes", "100", "-s", "128x96", "static/"+strconv.Itoa(pfc)+"1.png")
+	e = os.Remove("static/" + strconv.Itoa(pfc) + "4.png")
+	if e != nil {
+		fmt.Printf("Delete Error: %s\n", e)
+	}
+	e = os.Remove("static/" + strconv.Itoa(pfc) + "5.png")
+	if e != nil {
+		fmt.Printf("Delete Error: %s\n", e)
+	}
+	e = os.Remove("static/" + strconv.Itoa(pfc) + "6.png")
+	if e != nil {
+		fmt.Printf("Delete Error: %s\n", e)
+	}
+	cmd := exec.Command(exefile, "-ss", tp1, "-i", tnfile, "-vframes", "100", "-s", "128x96", "static/"+strconv.Itoa(pfc)+"1.png")
 	if err := cmd.Run(); err != nil {
 		fmt.Printf("Command %s \n Error: %s\n", cmd, err)
 	}
-	cmd = exec.Command(exefile, "-ss", "00:00:10", "-i", tnfile, "-vframes", "100", "-s", "128x96", "static/"+strconv.Itoa(pfc)+"2.png")
+	fmt.Println(tp1)
+	cmd = exec.Command(exefile, "-ss", tp2, "-i", tnfile, "-vframes", "100", "-s", "128x96", "static/"+strconv.Itoa(pfc)+"2.png")
 	if err := cmd.Run(); err != nil {
 		fmt.Printf("Command %s \n Error: %s\n", cmd, err)
 	}
-	cmd = exec.Command(exefile, "-ss", "00:00:20", "-i", tnfile, "-vframes", "100", "-s", "128x96", "static/"+strconv.Itoa(pfc)+"3.png")
+	cmd = exec.Command(exefile, "-ss", tp3, "-i", tnfile, "-vframes", "100", "-s", "128x96", "static/"+strconv.Itoa(pfc)+"3.png")
 	if err := cmd.Run(); err != nil {
 		fmt.Printf("Command %s \n Error: %s\n", cmd, err)
 	}
-	xdata = xdata + " <A HREF='http://" + xip + ":8080/playvideo?video=" + fn + "&sdir=" + sdir + "'>  [ " + fn + " ] <BR> <IMG SRC=static/" + strconv.Itoa(pfc) + "1.png ALT=test123> <IMG SRC=static/" + strconv.Itoa(pfc) + "2.png  ALT=xerror> <IMG SRC=static/" + strconv.Itoa(pfc) + "3.png  ALT=error> </A><BR> "
+	cmd = exec.Command(exefile, "-ss", tp4, "-i", tnfile, "-vframes", "100", "-s", "128x96", "static/"+strconv.Itoa(pfc)+"4.png")
+	if err := cmd.Run(); err != nil {
+		fmt.Printf("Command %s \n Error: %s\n", cmd, err)
+	}
+	cmd = exec.Command(exefile, "-ss", tp5, "-i", tnfile, "-vframes", "100", "-s", "128x96", "static/"+strconv.Itoa(pfc)+"5.png")
+	if err := cmd.Run(); err != nil {
+		fmt.Printf("Command %s \n Error: %s\n", cmd, err)
+	}
+	cmd = exec.Command(exefile, "-ss", tp6, "-i", tnfile, "-vframes", "100", "-s", "128x96", "static/"+strconv.Itoa(pfc)+"6.png")
+	if err := cmd.Run(); err != nil {
+		fmt.Printf("Command %s \n Error: %s\n", cmd, err)
+	}
+
+	xdata = xdata + " <A HREF='http://" + xip + ":8080/playvideo?video=" + fn + "&sdir=" + sdir + "'>  [ " + fn + " ] <BR> <IMG SRC=static/" + strconv.Itoa(pfc) + "1.png ALT=test123> <IMG SRC=static/" + strconv.Itoa(pfc) + "2.png  ALT=xerror> <IMG SRC=static/" + strconv.Itoa(pfc) + "3.png  ALT=error> <IMG SRC=static/" + strconv.Itoa(pfc) + "4.png  ALT=error><IMG SRC=static/" + strconv.Itoa(pfc) + "5.png  ALT=error> <IMG SRC=static/" + strconv.Itoa(pfc) + "6.png  ALT=error></A><BR> "
 
 	return xdata
 }
@@ -920,4 +941,95 @@ func ImageScrollDisplay(exefile string, tnfile string, fileName string, fc int, 
 
 	//-------------------------------------------------------------------------------------------------
 	return xdata
+}
+
+func TimePosition(exefilea string, tnfile string, ctl int) string {
+	xdata := ""
+	bfile := "tmp.bat"
+	//-------------------------------------------------------------------------------------------------
+	bdata := []byte(exefilea + " -i " + tnfile + " -show_entries format=duration -v quiet -of csv >tmp.csv")
+	err := os.WriteFile(bfile, bdata, 0644)
+	cmd := exec.Command(bfile)
+	if err = cmd.Run(); err != nil {
+		fmt.Printf("Command %s \n Error: %s\n", cmd, err)
+	}
+	dat := []byte("")
+	dat, err = os.ReadFile("tmp.csv")
+	tdata := string(dat)
+	tmp := strings.Split(tdata, ",")
+	tmpa := strings.Split(tmp[1], ".")
+	t := tmpa[0]
+	i, _ := strconv.Atoi(t)
+	mc := 0
+	m := 0
+	sc := 0
+	for x := 0; x < i; x++ {
+		mc++
+		sc++
+		if mc > 59 {
+			m++
+			mc = 0
+			sc = 0
+		}
+
+	}
+	if m < 2 {
+		xdata = "00:00:10"
+	} else {
+		if m < 60 {
+			nt := m / 2
+			switch {
+			case ctl == 1:
+				ntt := nt / 2
+				nttt := ntt / 2
+				ntttt := nttt / 2
+				nt = nt - ntt
+				nt = nt - nttt
+				nt = nt - ntttt
+			case ctl == 2:
+				ntt := nt / 2
+				nttt := ntt / 2
+				nt = nt - ntt
+				nt = nt - nttt
+			case ctl == 3:
+				ntt := nt / 2
+				nt = nt - ntt
+			case ctl == 4:
+				ntt := nt / 2
+				nt = nt + ntt
+			case ctl == 5:
+				ntt := nt / 2
+				nttt := ntt / 2
+				nt = nt + ntt
+				nt = nt + nttt
+			case ctl == 6:
+				ntt := nt / 2
+				nttt := ntt / 2
+				ntttt := nttt / 2
+				nt = nt + ntt
+				nt = nt + nttt
+				nt = nt + ntttt
+			}
+			if nt > 9 {
+				xdata = "00:" + strconv.Itoa(nt) + ":00"
+			} else {
+				xdata = "00:0" + strconv.Itoa(nt) + ":00"
+			}
+		} else {
+			xdata = "00:59:00"
+		}
+	}
+
+	return xdata
+}
+
+func CheckforFile(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
+	}
+	if os.IsNotExist(err) {
+		return false
+	}
+	return false
 }
