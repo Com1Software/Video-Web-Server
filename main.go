@@ -367,7 +367,9 @@ func DisplayPage(subdir bool, xip string, port string, page string, sdir string,
 					xdata = xdata + "</center>"
 					xdata = xdata + "</TD>"
 					xdata = xdata + "</TABLE>"
-					xdata = xdata + "<HR>"
+					if pfc < pgsize {
+						xdata = xdata + "<HR>"
+					}
 				}
 			}
 		}
