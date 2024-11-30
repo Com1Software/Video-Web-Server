@@ -28,7 +28,7 @@ func main() {
 	exefile := "/ffmpeg/bin/ffmpeg.exe"
 	exefilea := "/ffmpeg/bin/ffprobe.exe"
 	drive := "c"
-	wdir := drive + ":/tmp/"
+	wdir := "/dwhelper/"
 	pgsize := 10
 	maxsel := 1000
 	display := 0
@@ -959,7 +959,7 @@ func DisplayPage(subdir bool, xip string, port string, page string, sdir string,
 		xdata = xdata + "</TD>"
 		xdata = xdata + "<TD with='100'>"
 		xdata = xdata + "</TD>"
-		xdata = xdata + "<TD with='300'>"
+		xdata = xdata + "<TD valign='top' with='300'>"
 		xdata = xdata + "<center>"
 		xdata = xdata + "<FIELDSET>"
 		xdata = xdata + "<LEGEND>"
