@@ -92,11 +92,11 @@ func main() {
 
 		})
 
-		//------------------------------------------------Delete Video Page Handler
-		http.HandleFunc("/deletevideo", func(w http.ResponseWriter, r *http.Request) {
+		//------------------------------------------------ Tag Video Page Handler
+		http.HandleFunc("/tagvideo", func(w http.ResponseWriter, r *http.Request) {
 			video := r.URL.Query().Get("video")
 			sdir := r.URL.Query().Get("sdir")
-			xdata := DeleteVideoPage(xip, port, video, exefile, exefilea, drive, wdir, sdir)
+			xdata := TagVideoPage(xip, port, video, exefile, exefilea, drive, wdir, sdir)
 			fmt.Fprint(w, xdata)
 
 		})
@@ -306,8 +306,6 @@ func fixFileName(fileName string) string {
 	err := os.Rename(fileName, newName)
 	if err != nil {
 		fmt.Println("Error renaming file:", err)
-	} else {
-		fmt.Println("File renamed successfully")
 	}
 	return newName
 }
@@ -346,7 +344,6 @@ func ParseFrameRate(data string) string {
 			denominator, _ := strconv.Atoi(v2)
 			if denominator > 0 {
 				fps := numerator / denominator
-				// fmt.Printf("The frame rate is: %.2f fps\n", fps)
 				rtn = strconv.Itoa(fps)
 			}
 		}
@@ -525,7 +522,7 @@ func BasicDisplay(exefile string, exefilea string, tnfile string, fileName strin
 	if err := cmd.Run(); err != nil {
 		fmt.Printf("Command %s \n Error: %s\n", cmd, err)
 	}
-	fmt.Println(tp1)
+
 	cmd = exec.Command(exefile, "-ss", tp2, "-i", tnfile, "-vframes", "100", "-s", "128x96", "static/"+strconv.Itoa(pfc)+"2.png")
 	if err := cmd.Run(); err != nil {
 		fmt.Printf("Command %s \n Error: %s\n", cmd, err)
@@ -849,7 +846,6 @@ func DisplayPage(subdir bool, xip string, port string, page string, sdir string,
 	switch {
 	case display == 1:
 		xdata = xdata + "<meta name='viewport' content='width=device-width, initial-scale=1'>"
-
 		xdata = xdata + "<style>"
 		xdata = xdata + "div.scroll-container {"
 		xdata = xdata + "background-color: #333;"
@@ -861,7 +857,6 @@ func DisplayPage(subdir bool, xip string, port string, page string, sdir string,
 		xdata = xdata + "padding: 10px;"
 		xdata = xdata + "}"
 		xdata = xdata + "</style>"
-
 	}
 	xdata = xdata + "</head>"
 	//------------------------------------------------------------------------
@@ -877,8 +872,6 @@ func DisplayPage(subdir bool, xip string, port string, page string, sdir string,
 	//------------------------------------------------------------------------
 	pg, _ := strconv.Atoi(page)
 	if _, err := os.Stat(exefile); err == nil {
-		fmt.Printf("- Parser Detected")
-		fmt.Println(wdir + sdir)
 		nsd := wdir + sdir + "/"
 		files, err := ioutil.ReadDir(nsd)
 		if err != nil {
@@ -888,7 +881,7 @@ func DisplayPage(subdir bool, xip string, port string, page string, sdir string,
 		pfc := 0
 		pgcnt := 0
 		for _, file := range files {
-			fmt.Println(file.Name())
+			//fmt.Println(file.Name())
 			if ValidFileType(strings.ToLower(path.Ext(file.Name()))) {
 				pfc++
 				fc++
@@ -935,7 +928,7 @@ func DisplayPage(subdir bool, xip string, port string, page string, sdir string,
 		pfc = 0
 		xdata = xdata + "<center>"
 		xdata = xdata + "<TABLE>"
-		xdata = xdata + "<TD valign='top' with='200'>"
+		xdata = xdata + "<TD valign='top' with='160'>"
 		xdata = xdata + "<center>"
 		xdata = xdata + "<FIELDSET>"
 		xdata = xdata + "<LEGEND>"
@@ -946,13 +939,66 @@ func DisplayPage(subdir bool, xip string, port string, page string, sdir string,
 			if err != nil {
 				log.Fatal(err)
 			}
+			fcol := 0
+			xdata = xdata + "<TABLE>"
+			xdata = xdata + "<TD valign='top' with='50'>"
+			xdata = xdata + "<center>"
 			for _, e := range entries {
-				fmt.Printf("Check %s\n", nsd+e.Name())
-				//	if CheckforFile(nsd+e.Name()) == false {
-				xdata = xdata + "  <A HREF='http://" + xip + ":8080/display?page=1&sdir=" + e.Name() + "'> " + e.Name() + " </A><BR>  "
-
-				//	}
+				fcol++
+				if fcol == 1 {
+					xdata = xdata + "  <A HREF='http://" + xip + ":8080/display?page=1&sdir=" + e.Name() + "'>  [" + e.Name() + "]  </A><BR>  "
+				}
+				if fcol > 3 {
+					fcol = 0
+				}
 			}
+			xdata = xdata + "</center>"
+			xdata = xdata + "</TD>"
+			xdata = xdata + "<TD valign='top' with='50'>"
+			xdata = xdata + "<center>"
+			fcol = 0
+			for _, e := range entries {
+				fcol++
+				if fcol == 2 {
+					xdata = xdata + "  <A HREF='http://" + xip + ":8080/display?page=1&sdir=" + e.Name() + "'>  [" + e.Name() + "]  </A><BR>  "
+				}
+				if fcol > 3 {
+					fcol = 0
+				}
+			}
+
+			xdata = xdata + "</center>"
+			xdata = xdata + "</TD>"
+			xdata = xdata + "<TD valign='top' with='50'>"
+			xdata = xdata + "<center>"
+			fcol = 0
+			for _, e := range entries {
+				fcol++
+				if fcol == 3 {
+					xdata = xdata + "  <A HREF='http://" + xip + ":8080/display?page=1&sdir=" + e.Name() + "'>  [" + e.Name() + "]  </A><BR>  "
+				}
+				if fcol > 3 {
+					fcol = 0
+				}
+			}
+			xdata = xdata + "</center>"
+			xdata = xdata + "</TD>"
+			xdata = xdata + "<TD valign='top' with='50'>"
+			xdata = xdata + "<center>"
+			fcol = 0
+			for _, e := range entries {
+				fcol++
+				if fcol == 4 {
+					xdata = xdata + "  <A HREF='http://" + xip + ":8080/display?page=1&sdir=" + e.Name() + "'>  [" + e.Name() + "]  </A><BR>  "
+				}
+				if fcol > 3 {
+					fcol = 0
+				}
+			}
+			xdata = xdata + "</center>"
+			xdata = xdata + "</TD>"
+			xdata = xdata + "</TABLE>"
+
 		}
 		xdata = xdata + "</FIELDSET>"
 		xdata = xdata + "</center>"
@@ -989,7 +1035,7 @@ func DisplayPage(subdir bool, xip string, port string, page string, sdir string,
 					xdata = xdata + "<TABLE>"
 					xdata = xdata + "<TD with='200'>"
 					xdata = xdata + "<center>"
-					xdata = xdata + " <A HREF='http://" + xip + ":8080/deletevideo?video=" + file.Name() + "&sdir=" + sdir + "'> [ Delete Video ] </A>  "
+					xdata = xdata + " <A HREF='http://" + xip + ":8080/tagvideo?video=" + file.Name() + "&sdir=" + sdir + "'> [ Video Tags ] </A>  "
 					xdata = xdata + "</center>"
 					xdata = xdata + "</TD>"
 					xdata = xdata + "<TD with='200'>"
@@ -1104,21 +1150,18 @@ func PlayVideoPage(xip string, port string, video string, exefile string, exefil
 	xdata = xdata + " </body>"
 	xdata = xdata + " </html>"
 	//------------------------------------------------------------------------
-	//ft := strings.ToLower(path.Ext(tnfile))
-	// fmt.Println(ft)
 	e = os.Remove("static/tmp.mp4")
 	if e != nil {
 		fmt.Printf("Delete Error: %s\n", e)
 	}
 	if strings.ToLower(path.Ext(tnfile)) == ".mp4" {
 
-		c, ce := copy(tnfile, "static/tmp.mp4")
-		fmt.Printf("%d %e \n", c, ce)
+		_, _ = copy(tnfile, "static/tmp.mp4")
+		//fmt.Printf("%d %e \n", c, ce)
 
 	} else {
 
 		cmd = exec.Command(exefile, "-i", tnfile, "-strict", "-2", "static/tmp.mp4")
-		fmt.Println(cmd)
 		if err := cmd.Run(); err != nil {
 			fmt.Printf("Command %s \n Error: %s\n", cmd, err)
 		}
@@ -1130,14 +1173,14 @@ func PlayVideoPage(xip string, port string, video string, exefile string, exefil
 }
 
 //----------------------------------------------------------------
-func DeleteVideoPage(xip string, port string, video string, exefile string, exefilea string, drive string, wdir string, sdir string) string {
+func TagVideoPage(xip string, port string, video string, exefile string, exefilea string, drive string, wdir string, sdir string) string {
 	//---------------------------------------------------------------------------
 	//----------------------------------------------------------------------------
 	xdata := "<!DOCTYPE html>"
 	xdata = xdata + "<html>"
 	xdata = xdata + "<head>"
 	//------------------------------------------------------------------------
-	xdata = xdata + "<title>Delete Video Page</title>"
+	xdata = xdata + "<title>Tag Video Page</title>"
 	//------------------------------------------------------------------------
 	xdata = DateTimeDisplay(xdata)
 	xdata = xdata + "<style>"
@@ -1168,7 +1211,7 @@ func DeleteVideoPage(xip string, port string, video string, exefile string, exef
 	xdata = xdata + "</head>"
 	//------------------------------------------------------------------------
 	xdata = xdata + "<body onload='startTime()'>"
-	xdata = xdata + "<H1>Delete Video Page</H1>"
+	xdata = xdata + "<H1>Tag Video Page</H1>"
 	xdata = xdata + "<div id='txtdt'></div>"
 	//---------
 	xdata = xdata + "<center>"
@@ -1178,20 +1221,7 @@ func DeleteVideoPage(xip string, port string, video string, exefile string, exef
 	xdata = xdata + "<BR>"
 	xdata = xdata + "</center>"
 	//------------------------------------------------------------------------
-	//------------------------------------------------------------------------
-	tfile := wdir + sdir + "/" + video
-	tnfile := fixFileName(tfile)
-	e := os.Remove("static/" + video + ".png")
-	if e != nil {
-		fmt.Printf("Delete Error: %s\n", e)
-	}
-	cmd := exec.Command(exefile, "-ss", "00:00:01", "-i", tnfile, "-vframes", "100", "-s", "600x400", "static/"+video+".png")
-	if err := cmd.Run(); err != nil {
-		fmt.Printf("Command %s \n Error: %s\n", cmd, err)
-	}
-	xdata = xdata + "<center>"
-	xdata = xdata + " <A HREF='http://" + xip + ":8080/static/tmp.mp4'>  [ " + video + " ] <BR> <IMG SRC=static/" + video + ".png ALT=test123>"
-	xdata = xdata + "</center>"
+
 	//------------------------------------------------------------------------
 	xdata = xdata + " </body>"
 	xdata = xdata + " </html>"
@@ -1252,16 +1282,15 @@ func MoveVideoPage(xip string, port string, video string, exefile string, exefil
 	//------------------------------------------------------------------------
 	tfile := wdir + sdir + "/" + video
 	tnfile := fixFileName(tfile)
-	nsd := wdir + sdir + "/"
 	xdata = xdata + "<BR><BR>"
 	xdata = xdata + "<center>"
 	xdata = xdata + "<TABLE>"
-	xdata = xdata + "<TD with='200'>"
+	xdata = xdata + "<TD valign='top' with='200'>"
 	xdata = xdata + "<center>"
 	xdata = xdata + MoveDisplay(exefile, exefilea, tnfile, tfile, 1, tfile, xip, sdir)
 	xdata = xdata + "</center>"
 	xdata = xdata + "</TD>"
-	xdata = xdata + "<TD with='200'>"
+	xdata = xdata + "<TD valign='top' with='200'>"
 	xdata = xdata + "<center>"
 	xdata = xdata + FileData(exefilea, tnfile, tfile)
 	xdata = xdata + "</center>"
@@ -1279,11 +1308,8 @@ func MoveVideoPage(xip string, port string, video string, exefile string, exefil
 			log.Fatal(err)
 		}
 		for _, e := range entries {
-			fmt.Printf("Check %s\n", nsd+e.Name())
-			//	if CheckforFile(nsd+e.Name()) == false {
 			xdata = xdata + "  <A HREF='http://" + xip + ":8080/movevideocomplete?video=" + video + "&sdir=" + sdir + "&ddir=" + e.Name() + "'> " + e.Name() + " </A><BR>  "
 
-			//	}
 		}
 	}
 	xdata = xdata + "</FIELDSET>"
