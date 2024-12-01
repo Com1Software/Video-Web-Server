@@ -40,7 +40,7 @@ func main() {
 	}
 
 	drive := "c"
-	wdir := "/home/"
+	wdir := "/dwhelper/"
 	pgsize := 10
 	maxsel := 1000
 	display := 0
