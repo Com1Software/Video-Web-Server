@@ -28,19 +28,21 @@ func main() {
 	exefile := ""
 	exefilea := ""
 
+	drive := "c"
+	wdir := "/tmp/"
 	switch runtime.GOOS {
 	case "windows":
 		exefile = "/ffmpeg/bin/ffmpeg.exe"
 		exefilea = "/ffmpeg/bin/ffprobe.exe"
+		wdir = "/dwhelper/"
 
 	case "linux":
 		exefile = "ffmpeg"
 		exefilea = "ffprobe"
+		wdir = "/media/dave/Elements/dwhelper/"
 
 	}
 
-	drive := "c"
-	wdir := "/dwhelper/"
 	pgsize := 10
 	maxsel := 1000
 	display := 0
@@ -422,9 +424,20 @@ func ParseBitRate(data string) string {
 
 func FileData(exefilea string, tnfile string, fileName string) string {
 	xdata := ""
-	bfile := "tmp.bat"
+	bfile := ""
+	switch runtime.GOOS {
+	case "windows":
+		bfile = "tmp.bat"
+	case "linux":
+		bfile = "tmp.sh"
+
+	}
+
 	bdata := []byte(exefilea + " -i " + tnfile + " -show_entries stream=width,height -of csv=" + fmt.Sprintf("%q", "p=0") + ">tmp.csv")
-	err := os.WriteFile(bfile, bdata, 0644)
+	err := os.WriteFile(bfile, bdata, 0777)
+	if runtime.GOOS == "linux" {
+		bfile = "./" + bfile
+	}
 	cmd := exec.Command(bfile)
 	if err = cmd.Run(); err != nil {
 		fmt.Printf("Command %s \n Error: %s\n", cmd, err)
@@ -668,10 +681,20 @@ func MoveDisplay(exefile string, exefilea string, tnfile string, fileName string
 
 func TimePosition(exefilea string, tnfile string, ctl int) string {
 	xdata := ""
-	bfile := "tmp.bat"
+	bfile := ""
+	switch runtime.GOOS {
+	case "windows":
+		bfile = "tmp.bat"
+	case "linux":
+		bfile = "tmp.sh"
+
+	}
 	//-------------------------------------------------------------------------------------------------
 	bdata := []byte(exefilea + " -i " + tnfile + " -show_entries format=duration -v quiet -of csv >tmp.csv")
-	err := os.WriteFile(bfile, bdata, 0644)
+	err := os.WriteFile(bfile, bdata, 0777)
+	if runtime.GOOS == "linux" {
+		bfile = "./" + bfile
+	}
 	cmd := exec.Command(bfile)
 	if err = cmd.Run(); err != nil {
 		fmt.Printf("Command %s \n Error: %s\n", cmd, err)
@@ -897,7 +920,7 @@ func DisplayPage(subdir bool, xip string, port string, page string, sdir string,
 		}
 
 	case "linux":
-		nsd = wdir + sdir
+		nsd = wdir + sdir + "/"
 		fctl = true
 	}
 	if fctl {
