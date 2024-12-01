@@ -19,16 +19,28 @@ import (
 	asciistring "github.com/Com1Software/Go-ASCII-String-Package"
 )
 
-//----------------------------------------------------------------
+// ----------------------------------------------------------------
 func main() {
 	fmt.Println("Video Web Server")
 	fmt.Printf("Operating System : %s\n", runtime.GOOS)
 	xip := fmt.Sprintf("%s", GetOutboundIP())
 	port := "8080"
-	exefile := "/ffmpeg/bin/ffmpeg.exe"
-	exefilea := "/ffmpeg/bin/ffprobe.exe"
+	exefile := ""
+	exefilea := ""
+
+	switch runtime.GOOS {
+	case "windows":
+		exefile = "/ffmpeg/bin/ffmpeg.exe"
+		exefilea = "/ffmpeg/bin/ffprobe.exe"
+
+	case "linux":
+		exefile = "ffmpeg"
+		exefilea = "ffprobe"
+
+	}
+
 	drive := "c"
-	wdir := "/dwhelper/"
+	wdir := "/home/"
 	pgsize := 10
 	maxsel := 1000
 	display := 0
@@ -518,6 +530,7 @@ func BasicDisplay(exefile string, exefilea string, tnfile string, fileName strin
 	if e != nil {
 		fmt.Printf("Delete Error: %s\n", e)
 	}
+
 	cmd := exec.Command(exefile, "-ss", tp1, "-i", tnfile, "-vframes", "100", "-s", "128x96", "static/"+strconv.Itoa(pfc)+"1.png")
 	if err := cmd.Run(); err != nil {
 		fmt.Printf("Command %s \n Error: %s\n", cmd, err)
@@ -788,7 +801,7 @@ func InitPage(xip string) string {
 	return xdata
 }
 
-//----------------------------------------------------------------
+// ----------------------------------------------------------------
 func AboutPage(xip string) string {
 	//----------------------------------------------------------------------------
 	xdata := "<!DOCTYPE html>"
@@ -835,9 +848,10 @@ func AboutPage(xip string) string {
 
 }
 
-//----------------------------------------------------------------
+// ----------------------------------------------------------------
 func DisplayPage(subdir bool, xip string, port string, page string, sdir string, exefile string, exefilea string, drive string, wdir string, pgsize int, maxsel int, display int) string {
 	//---------------------------------------------------------------------------
+	fmt.Println("In Page")
 	pgselect := ""
 	//----------------------------------------------------------------------------
 	xdata := "<!DOCTYPE html>"
@@ -871,12 +885,28 @@ func DisplayPage(subdir bool, xip string, port string, page string, sdir string,
 	xdata = xdata + "</center>"
 	//------------------------------------------------------------------------
 	pg, _ := strconv.Atoi(page)
-	if _, err := os.Stat(exefile); err == nil {
-		nsd := wdir + sdir + "/"
+	fctl := false
+	nsd := ""
+	switch runtime.GOOS {
+	case "windows":
+		if _, err := os.Stat(exefile); err == nil {
+			nsd = wdir + sdir + "/"
+			fctl = true
+		} else {
+			fmt.Println(err)
+		}
+
+	case "linux":
+		nsd = wdir + sdir
+		fctl = true
+	}
+	if fctl {
 		files, err := ioutil.ReadDir(nsd)
 		if err != nil {
+
 			log.Fatal(err)
 		}
+
 		fc := 0
 		pfc := 0
 		pgcnt := 0
@@ -1066,8 +1096,7 @@ func DisplayPage(subdir bool, xip string, port string, page string, sdir string,
 		xdata = xdata + "</TD>"
 		xdata = xdata + "</TABLE>"
 		xdata = xdata + "</center>"
-	} else {
-		fmt.Println(err)
+
 	}
 	//------------------------------------------------------------------------
 	xdata = xdata + "<center>"
@@ -1079,11 +1108,12 @@ func DisplayPage(subdir bool, xip string, port string, page string, sdir string,
 	//------------------------------------------------------------------------
 	xdata = xdata + " </body>"
 	xdata = xdata + " </html>"
+	fmt.Println("In return")
 	return xdata
 
 }
 
-//----------------------------------------------------------------
+// ----------------------------------------------------------------
 func PlayVideoPage(xip string, port string, video string, exefile string, exefilea string, drive string, wdir string, sdir string) string {
 	//---------------------------------------------------------------------------
 	//----------------------------------------------------------------------------
@@ -1172,7 +1202,7 @@ func PlayVideoPage(xip string, port string, video string, exefile string, exefil
 
 }
 
-//----------------------------------------------------------------
+// ----------------------------------------------------------------
 func TagVideoPage(xip string, port string, video string, exefile string, exefilea string, drive string, wdir string, sdir string) string {
 	//---------------------------------------------------------------------------
 	//----------------------------------------------------------------------------
@@ -1231,7 +1261,7 @@ func TagVideoPage(xip string, port string, video string, exefile string, exefile
 
 }
 
-//----------------------------------------------------------------
+// ----------------------------------------------------------------
 func MoveVideoPage(xip string, port string, video string, exefile string, exefilea string, drive string, wdir string, sdir string, subdir bool) string {
 	//---------------------------------------------------------------------------
 	//----------------------------------------------------------------------------
@@ -1330,7 +1360,7 @@ func MoveVideoPage(xip string, port string, video string, exefile string, exefil
 
 }
 
-//----------------------------------------------------------------
+// ----------------------------------------------------------------
 func MoveVideoCompletePage(xip string, port string, video string, exefile string, exefilea string, drive string, wdir string, sdir string, ddir string) string {
 	//----------------------------------------------------------------------------
 	xdata := "<!DOCTYPE html>"
