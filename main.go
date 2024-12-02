@@ -874,7 +874,6 @@ func AboutPage(xip string) string {
 // ----------------------------------------------------------------
 func DisplayPage(subdir bool, xip string, port string, page string, sdir string, exefile string, exefilea string, drive string, wdir string, pgsize int, maxsel int, display int) string {
 	//---------------------------------------------------------------------------
-	fmt.Println("In Page")
 	pgselect := ""
 	//----------------------------------------------------------------------------
 	xdata := "<!DOCTYPE html>"
@@ -1131,7 +1130,6 @@ func DisplayPage(subdir bool, xip string, port string, page string, sdir string,
 	//------------------------------------------------------------------------
 	xdata = xdata + " </body>"
 	xdata = xdata + " </html>"
-	fmt.Println("In return")
 	return xdata
 
 }
