@@ -17,6 +17,8 @@ import (
 	"os"
 
 	asciistring "github.com/Com1Software/Go-ASCII-String-Package"
+	"github.com/Valentin-Kaiser/go-dbase/dbase"
+	"golang.org/x/text/encoding/charmap"
 )
 
 // ----------------------------------------------------------------
@@ -119,6 +121,7 @@ func main() {
 		fs := http.FileServer(http.Dir("static/"))
 		http.Handle("/static/", http.StripPrefix("/static/", fs))
 		//------------------------------------------------- Start Server
+		TableCheck()
 		Openbrowser(xip + ":" + port)
 		if err := http.ListenAndServe(xip+":"+port, nil); err != nil {
 			panic(err)
@@ -146,6 +149,56 @@ func Openbrowser(url string) error {
 	}
 	args = append(args, url)
 	return exec.Command(cmd, args...).Start()
+}
+
+func TableCheck() {
+	tt := "TAGS.DBF"
+
+	if _, err := os.Stat(tt); err == nil {
+
+	} else {
+
+		file, err := dbase.NewTable(
+			dbase.FoxProVar,
+			&dbase.Config{
+				Filename:   tt,
+				Converter:  dbase.NewDefaultConverter(charmap.Windows1250),
+				TrimSpaces: true,
+			},
+			columns(),
+			64,
+			nil,
+		)
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Printf(
+			"Last modified: %v Columns count: %v Record count: %v File size: %v \n",
+			file.Header().Modified(0),
+			file.Header().ColumnsCount(),
+			file.Header().RecordsCount(),
+			file.Header().FileSize(),
+		)
+
+		// Print all database column infos.
+		for _, column := range file.Columns() {
+			fmt.Printf("Name: %v - Type: %v \n", column.Name(), column.Type())
+		}
+
+		defer file.Close()
+	}
+}
+
+func columns() []*dbase.Column {
+
+	tagCol, err := dbase.NewColumn("Tag", dbase.Varchar, 80, 0, false)
+	if err != nil {
+		panic(err)
+	}
+	return []*dbase.Column{
+		tagCol,
+	}
 }
 
 func DateTimeDisplay(xdata string) string {
@@ -813,6 +866,8 @@ func InitPage(xip string) string {
 
 	xdata = xdata + "  <A HREF='http://" + xip + ":8080/about'> [ About ] </A>  "
 	xdata = xdata + "  <A HREF='http://" + xip + ":8080/display?page=1'> [ Display ] </A>  "
+	xdata = xdata + "  <A HREF='http://" + xip + ":8080/search'> [ Search ] </A>  "
+	xdata = xdata + "  <A HREF='http://" + xip + ":8080/tags'> [ Tags ] </A>  "
 	xdata = xdata + "  <A HREF='http://" + xip + ":8080/static/index.html'> [ Static Index ] </A>  "
 	xdata = xdata + "<BR><BR>Video Web Server"
 
