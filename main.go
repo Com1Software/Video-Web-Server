@@ -153,6 +153,7 @@ func Openbrowser(url string) error {
 
 func TableCheck() {
 	tt := "TAGS.DBF"
+	vtf := "VIDEOS.DBF"
 
 	if _, err := os.Stat(tt); err == nil {
 
@@ -172,22 +173,29 @@ func TableCheck() {
 		if err != nil {
 			panic(err)
 		}
-
-		fmt.Printf(
-			"Last modified: %v Columns count: %v Record count: %v File size: %v \n",
-			file.Header().Modified(0),
-			file.Header().ColumnsCount(),
-			file.Header().RecordsCount(),
-			file.Header().FileSize(),
-		)
-
-		// Print all database column infos.
-		for _, column := range file.Columns() {
-			fmt.Printf("Name: %v - Type: %v \n", column.Name(), column.Type())
-		}
-
 		defer file.Close()
 	}
+	if _, err := os.Stat(vtf); err == nil {
+
+	} else {
+
+		file, err := dbase.NewTable(
+			dbase.FoxProVar,
+			&dbase.Config{
+				Filename:   vtf,
+				Converter:  dbase.NewDefaultConverter(charmap.Windows1250),
+				TrimSpaces: true,
+			},
+			columns(),
+			64,
+			nil,
+		)
+		if err != nil {
+			panic(err)
+		}
+		defer file.Close()
+	}
+
 }
 
 func columns() []*dbase.Column {
