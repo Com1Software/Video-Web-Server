@@ -109,7 +109,7 @@ func main() {
 		})
 
 		//------------------------------------------------ Tag Video Page Handler
-		http.HandleFunc("/tagvideo", func(w http.ResponseWriter, r *http.Request) {
+		http.HandleFunc("/tags", func(w http.ResponseWriter, r *http.Request) {
 			video := r.URL.Query().Get("video")
 			sdir := r.URL.Query().Get("sdir")
 			xdata := TagVideoPage(xip, port, video, exefile, exefilea, drive, wdir, sdir)
@@ -166,7 +166,7 @@ func TableCheck() {
 				Converter:  dbase.NewDefaultConverter(charmap.Windows1250),
 				TrimSpaces: true,
 			},
-			columns(),
+			tcolumns(),
 			64,
 			nil,
 		)
@@ -186,7 +186,7 @@ func TableCheck() {
 				Converter:  dbase.NewDefaultConverter(charmap.Windows1250),
 				TrimSpaces: true,
 			},
-			columns(),
+			vcolumns(),
 			64,
 			nil,
 		)
@@ -198,7 +198,7 @@ func TableCheck() {
 
 }
 
-func columns() []*dbase.Column {
+func tcolumns() []*dbase.Column {
 
 	tagCol, err := dbase.NewColumn("Tag", dbase.Varchar, 80, 0, false)
 	if err != nil {
@@ -206,6 +206,21 @@ func columns() []*dbase.Column {
 	}
 	return []*dbase.Column{
 		tagCol,
+	}
+}
+
+func vcolumns() []*dbase.Column {
+
+	tagCol, err := dbase.NewColumn("Tag", dbase.Varchar, 80, 0, false)
+	videoCol, err := dbase.NewColumn("Video", dbase.Varchar, 254, 0, false)
+	ratedCol, err := dbase.NewColumn("Rated", dbase.Integer, 2, 0, false)
+	if err != nil {
+		panic(err)
+	}
+	return []*dbase.Column{
+		tagCol,
+		videoCol,
+		ratedCol,
 	}
 }
 
@@ -925,6 +940,40 @@ func AboutPage(xip string) string {
 	xdata = xdata + "<BR><BR>"
 
 	xdata = xdata + "Video Web Server"
+	//------------------------------------------------------------------------
+
+	//------------------------------------------------------------------------
+	xdata = xdata + " </body>"
+	xdata = xdata + " </html>"
+	return xdata
+
+}
+
+// ----------------------------------------------------------------
+func TagsPage(xip string) string {
+	//----------------------------------------------------------------------------
+	xdata := "<!DOCTYPE html>"
+	xdata = xdata + "<html>"
+	xdata = xdata + "<head>"
+	//------------------------------------------------------------------------
+	xdata = xdata + "<title>Tags Page</title>"
+	xdata = LoopDisplay(xdata)
+	//------------------------------------------------------------------------
+	xdata = DateTimeDisplay(xdata)
+	xdata = xdata + "</head>"
+	//------------------------------------------------------------------------
+	xdata = xdata + "<body onload='startTime()'>"
+	xdata = xdata + "<p>Video Web Server</p>"
+	xdata = xdata + "<div id='txtdt'></div>"
+	//---------
+	xdata = xdata + "<BR><BR>"
+	xdata = xdata + "  <A HREF='https://github.com/Com1Software/Video-Web-Server'> [ Video Web Server GitHub Repository ] </A>  "
+	xdata = xdata + "<BR><BR>"
+	//------------------------------------------------------------------------
+	xdata = xdata + "  <A HREF='http://" + xip + ":8080'> [ Return to Start Page ] </A>  "
+	xdata = xdata + "<BR><BR>"
+
+	xdata = xdata + "Video Tags"
 	//------------------------------------------------------------------------
 
 	//------------------------------------------------------------------------
