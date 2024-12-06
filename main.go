@@ -108,15 +108,21 @@ func main() {
 
 		})
 
-		//------------------------------------------------ Tag Video Page Handler
+		//------------------------------------------------ Tag Page Handler
 		http.HandleFunc("/tags", func(w http.ResponseWriter, r *http.Request) {
+			xdata := TagsPage(xip)
+			fmt.Fprint(w, xdata)
+
+		})
+
+		//------------------------------------------------ Tag Video Page Handler
+		http.HandleFunc("/tagvideo", func(w http.ResponseWriter, r *http.Request) {
 			video := r.URL.Query().Get("video")
 			sdir := r.URL.Query().Get("sdir")
 			xdata := TagVideoPage(xip, port, video, exefile, exefilea, drive, wdir, sdir)
 			fmt.Fprint(w, xdata)
 
 		})
-
 		//------------------------------------------------- Static Handler Handler
 		fs := http.FileServer(http.Dir("static/"))
 		http.Handle("/static/", http.StripPrefix("/static/", fs))
