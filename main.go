@@ -21,6 +21,11 @@ import (
 	"golang.org/x/text/encoding/charmap"
 )
 
+type Tags struct {
+	Tag     string `dbase:"TAG"`
+	Testing string `dbase:"TESTING"`
+}
+
 // ----------------------------------------------------------------
 func main() {
 	fmt.Println("Video Web Server")
@@ -123,6 +128,55 @@ func main() {
 			fmt.Fprint(w, xdata)
 
 		})
+
+		http.HandleFunc("/addtag", func(w http.ResponseWriter, r *http.Request) {
+			mapinfo := r.FormValue("map")
+			fmt.Println(mapinfo)
+			table, err := dbase.OpenTable(&dbase.Config{
+				Filename:   "TAGS.DBF",
+				TrimSpaces: true,
+				WriteLock:  true,
+			})
+			if err != nil {
+				panic(err)
+			}
+			defer table.Close()
+			row, err := table.Row()
+			if err != nil {
+				panic(err)
+			}
+			p := Tags{
+				Testing: "test123",
+			}
+
+			row, err = table.RowFromStruct(p)
+			if err != nil {
+				panic(err)
+			}
+			fmt.Println(row)
+			// *row.Field(0) = "test"
+			//	err = row.FieldByName("TESTING").SetValue("MEMO_TEST_VALUE")
+			//	if err != nil {
+			//		panic(err)
+			//	}
+
+			err = row.Write()
+			if err != nil {
+				panic(err)
+			}
+
+			fmt.Printf(
+				"Last modified: %v Columns count: %v Record count: %v File size: %v \n",
+				table.Header().Modified(0),
+				table.Header().ColumnsCount(),
+				table.Header().RecordsCount(),
+				table.Header().FileSize(),
+			)
+
+			xdata := TagsPage(xip)
+			fmt.Fprint(w, xdata)
+
+		})
 		//------------------------------------------------- Static Handler Handler
 		fs := http.FileServer(http.Dir("static/"))
 		http.Handle("/static/", http.StripPrefix("/static/", fs))
@@ -180,6 +234,26 @@ func TableCheck() {
 			panic(err)
 		}
 		defer file.Close()
+
+		row, err := file.RowFromStruct(&Tags{
+			Tag: "TAG",
+		})
+		if err != nil {
+			panic(err)
+		}
+
+		err = row.Add()
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf(
+			"Last modified: %v Columns count: %v Record count: %v File size: %v \n",
+			file.Header().Modified(0),
+			file.Header().ColumnsCount(),
+			file.Header().RecordsCount(),
+			file.Header().FileSize(),
+		)
+
 	}
 	if _, err := os.Stat(vtf); err == nil {
 
@@ -200,6 +274,7 @@ func TableCheck() {
 			panic(err)
 		}
 		defer file.Close()
+
 	}
 
 }
@@ -207,11 +282,13 @@ func TableCheck() {
 func tcolumns() []*dbase.Column {
 
 	tagCol, err := dbase.NewColumn("Tag", dbase.Varchar, 80, 0, false)
+	testCol, err := dbase.NewColumn("Testing", dbase.Character, 80, 0, true)
 	if err != nil {
 		panic(err)
 	}
 	return []*dbase.Column{
 		tagCol,
+		testCol,
 	}
 }
 
@@ -969,20 +1046,47 @@ func TagsPage(xip string) string {
 	xdata = xdata + "</head>"
 	//------------------------------------------------------------------------
 	xdata = xdata + "<body onload='startTime()'>"
-	xdata = xdata + "<p>Video Web Server</p>"
+	xdata = xdata + "<center>"
+	xdata = xdata + "<H3>Tags Table</H3>"
 	xdata = xdata + "<div id='txtdt'></div>"
 	//---------
-	xdata = xdata + "<BR><BR>"
-	xdata = xdata + "  <A HREF='https://github.com/Com1Software/Video-Web-Server'> [ Video Web Server GitHub Repository ] </A>  "
 	xdata = xdata + "<BR><BR>"
 	//------------------------------------------------------------------------
 	xdata = xdata + "  <A HREF='http://" + xip + ":8080'> [ Return to Start Page ] </A>  "
 	xdata = xdata + "<BR><BR>"
-
 	xdata = xdata + "Video Tags"
 	//------------------------------------------------------------------------
+	xdata = xdata + " Cut and Paste Map to Validate<BR><BR>"
+	xdata = xdata + "<form action='/addtag' method='post'>"
+	xdata = xdata + "<textarea id='map' name='map' rows='1' cols='20'></textarea>"
+	xdata = xdata + "<BR><BR>"
+	xdata = xdata + "<input type='submit' value='Add Tag'/>"
+	xdata = xdata + "</form>"
+	xdata = xdata + "<BR><BR>"
+	table, err := dbase.OpenTable(&dbase.Config{
+		Filename:   "TAGS.DBF",
+		TrimSpaces: true,
+	})
+	if err != nil {
+		panic(err)
+	}
+	defer table.Close()
+	for !table.EOF() {
+		row, err := table.Next()
+		if err != nil {
+			panic(err)
+		}
+		//field := row.FieldByName("tag")
+		field := row.Field(0)
+		if field == nil {
+			panic("Field not found")
+		}
+		s := fmt.Sprintf("%v", field.GetValue())
+		xdata = xdata + s + "<BR>"
+	}
 
 	//------------------------------------------------------------------------
+	xdata = xdata + "</center>"
 	xdata = xdata + " </body>"
 	xdata = xdata + " </html>"
 	return xdata
