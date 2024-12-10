@@ -17,13 +17,13 @@ import (
 	"os"
 
 	asciistring "github.com/Com1Software/Go-ASCII-String-Package"
-	"github.com/Valentin-Kaiser/go-dbase/dbase"
+	"github.com/Com1Software/go-dbase/dbase"
 	"golang.org/x/text/encoding/charmap"
 )
 
 type Tags struct {
 	Tag     string `dbase:"TAG"`
-	Testing string `dbase:"TESTING"`
+	Testing string `dbase:"TESTINGA"`
 }
 
 // ----------------------------------------------------------------
@@ -146,7 +146,7 @@ func main() {
 				panic(err)
 			}
 			p := Tags{
-				Testing: "test123",
+				Tag: mapinfo,
 			}
 
 			row, err = table.RowFromStruct(p)
@@ -154,12 +154,10 @@ func main() {
 				panic(err)
 			}
 			fmt.Println(row)
-			// *row.Field(0) = "test"
-			//	err = row.FieldByName("TESTING").SetValue("MEMO_TEST_VALUE")
-			//	if err != nil {
-			//		panic(err)
-			//	}
-
+			err = row.FieldByName("TAG").SetValue(mapinfo)
+			if err != nil {
+				panic(err)
+			}
 			err = row.Write()
 			if err != nil {
 				panic(err)
@@ -220,7 +218,7 @@ func TableCheck() {
 	} else {
 
 		file, err := dbase.NewTable(
-			dbase.FoxProVar,
+			dbase.FoxProAutoincrement,
 			&dbase.Config{
 				Filename:   tt,
 				Converter:  dbase.NewDefaultConverter(charmap.Windows1250),
@@ -281,14 +279,12 @@ func TableCheck() {
 
 func tcolumns() []*dbase.Column {
 
-	tagCol, err := dbase.NewColumn("Tag", dbase.Varchar, 80, 0, false)
-	testCol, err := dbase.NewColumn("Testing", dbase.Character, 80, 0, true)
+	tagCol, err := dbase.NewColumn("TAG", dbase.Varchar, 80, 0, false)
 	if err != nil {
 		panic(err)
 	}
 	return []*dbase.Column{
 		tagCol,
-		testCol,
 	}
 }
 
