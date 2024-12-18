@@ -1614,6 +1614,38 @@ func TagVideoPage(xip string, port string, video string, exefile string, exefile
 	xdata = xdata + "</center>"
 	//------------------------------------------------------------------------
 
+	xdata = xdata + "  <A HREF='http://" + xip + ":8080/selecttag'> [ Add Tag ] </A>  "
+
+	table, err := dbase.OpenTable(&dbase.Config{
+		Filename:   "VIDEOS.DBF",
+		TrimSpaces: true,
+	})
+	if err != nil {
+		panic(err)
+	}
+	defer table.Close()
+
+	field, err := table.NewFieldByName("VIDEO", video)
+	if err != nil {
+		panic(err)
+	}
+
+	records, err := table.Search(field, false)
+	if err != nil {
+		panic(err)
+	}
+
+	// Print all found records.
+	fmt.Println("Found records with match:")
+	for _, record := range records {
+		field = record.FieldByName("VIDEO")
+		if field == nil {
+			panic("Field not found")
+		}
+
+		fmt.Printf("%v \n", field.GetValue())
+	}
+
 	//------------------------------------------------------------------------
 	xdata = xdata + " </body>"
 	xdata = xdata + " </html>"
