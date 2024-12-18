@@ -121,7 +121,8 @@ func main() {
 
 		//------------------------------------------------ Tag Edit Page Handler
 		http.HandleFunc("/tagedit", func(w http.ResponseWriter, r *http.Request) {
-			xdata := EditTagPage(xip)
+			recno := r.URL.Query().Get("recno")
+			xdata := EditTagPage(xip, recno)
 			fmt.Fprint(w, xdata)
 
 		})
@@ -169,16 +170,15 @@ func main() {
 				if err != nil {
 					panic(err)
 				}
-
-				fmt.Printf(
-					"Last modified: %v Columns count: %v Record count: %v File size: %v \n",
-					table.Header().Modified(0),
-					table.Header().ColumnsCount(),
-					table.Header().RecordsCount(),
-					table.Header().FileSize(),
-				)
 			}
 			xdata := TagsPage(xip)
+			fmt.Fprint(w, xdata)
+
+		})
+		http.HandleFunc("/updatetag", func(w http.ResponseWriter, r *http.Request) {
+			tag := r.FormValue("tag")
+			rn := r.FormValue("recno")
+			xdata := TagUpdatePage(xip, rn, tag)
 			fmt.Fprint(w, xdata)
 
 		})
@@ -1074,6 +1074,7 @@ func TagsPage(xip string) string {
 		panic(err)
 	}
 	defer table.Close()
+	recno := 0
 	for !table.EOF() {
 		row, err := table.Next()
 		if err != nil {
@@ -1085,14 +1086,16 @@ func TagsPage(xip string) string {
 			panic("Field not found")
 		}
 		s := fmt.Sprintf("%v", field.GetValue())
-		xdata = xdata + "  <A HREF='http://" + xip + ":8080/tagedit'> [ " + s + " ] </A>  "
+		xdata = xdata + "  <A HREF='http://" + xip + ":8080/tagedit?recno=" + strconv.Itoa(recno) + "'> [ " + s + " ] </A>  "
 		xdata = xdata + "<BR>"
+		recno++
+
 	}
 	return xdata
 }
 
 // ----------------------------------------------------------------
-func EditTagPage(xip string) string {
+func EditTagPage(xip string, recno string) string {
 	//----------------------------------------------------------------------------
 	xdata := "<!DOCTYPE html>"
 	xdata = xdata + "<html>"
@@ -1114,13 +1117,60 @@ func EditTagPage(xip string) string {
 	xdata = xdata + "  <A HREF='http://" + xip + ":8080'> [ Return to Start Page ] </A>  "
 	xdata = xdata + "<BR><BR>"
 	xdata = xdata + "Video Tags"
+
+	table, err := dbase.OpenTable(&dbase.Config{
+		Filename:   "TAGS.DBF",
+		TrimSpaces: true,
+	})
+	if err != nil {
+		panic(err)
+	}
+	defer table.Close()
+	rn, _ := strconv.Atoi(recno)
+	err = table.GoTo(uint32(rn))
+	if err != nil {
+		panic(err)
+	}
+	row, err := table.Row()
+	if err != nil {
+		panic(err)
+	}
+	field := row.Field(0)
+	if field == nil {
+		panic("Field not found")
+	}
+	s := fmt.Sprintf("%v", field.GetValue())
 	//------------------------------------------------------------------------
 	xdata = xdata + " Cut and Paste Map to Validate<BR><BR>"
-	xdata = xdata + "<form action='/addtag' method='post'>"
-	xdata = xdata + "<textarea id='map' name='map' rows='1' cols='20'></textarea>"
+	xdata = xdata + "<form action='/updatetag?recno=" + recno + "' method='post'>"
+	xdata = xdata + "<textarea id='tag' name='tag' rows='1' cols='20'>" + s + "</textarea>"
 	xdata = xdata + "<BR><BR>"
-	xdata = xdata + "<input type='submit' value='Add Tag'/>"
+	xdata = xdata + "<input type='submit' value='Upadte Tag'/>"
 	xdata = xdata + "</form>"
+	xdata = xdata + "<BR><BR>"
+	xdata = xdata + "<BR>"
+
+	return xdata
+}
+
+// ----------------------------------------------------------------
+func TagUpdatePage(xip string, recno string, tag string) string {
+	//----------------------------------------------------------------------------
+	xdata := "<!DOCTYPE html>"
+	xdata = xdata + "<html>"
+	xdata = xdata + "<head>"
+	//------------------------------------------------------------------------
+	xdata = xdata + "<title>Tag Update</title>"
+	xdata = LoopDisplay(xdata)
+	//------------------------------------------------------------------------
+	xdata = DateTimeDisplay(xdata)
+	xdata = xdata + "</head>"
+	//------------------------------------------------------------------------
+	xdata = xdata + "<body onload='startTime()'>"
+	xdata = xdata + "<center>"
+	xdata = xdata + "<H3>Tag Update</H3>"
+	xdata = xdata + "<div id='txtdt'></div>"
+	//---------
 	xdata = xdata + "<BR><BR>"
 
 	table, err := dbase.OpenTable(&dbase.Config{
@@ -1131,24 +1181,32 @@ func EditTagPage(xip string) string {
 		panic(err)
 	}
 	defer table.Close()
-
-	err = table.GoTo(0)
+	rn, _ := strconv.Atoi(recno)
+	err = table.GoTo(uint32(rn))
 	if err != nil {
 		panic(err)
 	}
-
-	// Read the first row.
 	row, err := table.Row()
 	if err != nil {
 		panic(err)
 	}
-
-	field := row.Field(0)
-	if field == nil {
-		panic("Field not found")
+	err = row.FieldByName("TAG").SetValue(tag)
+	if err != nil {
+		xdata = xdata + err.Error()
 	}
-	s := fmt.Sprintf("%v", field.GetValue())
-	xdata = xdata + "  <A HREF='http://" + xip + ":8080/tagedit'> [ " + s + " ] </A>  "
+	err = row.Write()
+	if err != nil {
+		xdata = xdata + err.Error()
+
+	}
+	xdata = xdata + "<BR>Complete<BR><BR>"
+	//------------------------------------------------------------------------
+	xdata = xdata + "  <A HREF='http://" + xip + ":8080/tags'> [ Return to Tags ] </A>  "
+	xdata = xdata + "<BR><BR>"
+	//------------------------------------------------------------------------
+	xdata = xdata + "  <A HREF='http://" + xip + ":8080'> [ Return to Start Page ] </A>  "
+	xdata = xdata + "<BR><BR>"
+
 	xdata = xdata + "<BR>"
 
 	return xdata
