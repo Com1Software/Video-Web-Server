@@ -127,15 +127,6 @@ func main() {
 
 		})
 
-		//------------------------------------------------ Tag Video Page Handler
-		http.HandleFunc("/tagvideo", func(w http.ResponseWriter, r *http.Request) {
-			video := r.URL.Query().Get("video")
-			sdir := r.URL.Query().Get("sdir")
-			xdata := TagVideoPage(xip, port, video, exefile, exefilea, drive, wdir, sdir)
-			fmt.Fprint(w, xdata)
-
-		})
-
 		http.HandleFunc("/addtag", func(w http.ResponseWriter, r *http.Request) {
 			tag := r.FormValue("map")
 			fmt.Println(tag)
@@ -182,6 +173,34 @@ func main() {
 			fmt.Fprint(w, xdata)
 
 		})
+
+		//------------------------------------------------ Tag Video Page Handler
+		http.HandleFunc("/tagvideo", func(w http.ResponseWriter, r *http.Request) {
+			video := r.URL.Query().Get("video")
+			sdir := r.URL.Query().Get("sdir")
+			xdata := TagVideoPage(xip, port, video, exefile, exefilea, drive, wdir, sdir)
+			fmt.Fprint(w, xdata)
+
+		})
+
+		//------------------------------------------------ Tag Video Page Handler
+		http.HandleFunc("/selecttag", func(w http.ResponseWriter, r *http.Request) {
+			video := r.URL.Query().Get("video")
+			sdir := r.URL.Query().Get("sdir")
+			xdata := SelectTagPage(xip, port, video, exefile, exefilea, drive, wdir, sdir)
+			fmt.Fprint(w, xdata)
+
+		})
+
+		//------------------------------------------------ Tag Video Page Handler
+		http.HandleFunc("/selectcomplete", func(w http.ResponseWriter, r *http.Request) {
+			video := r.URL.Query().Get("video")
+			sdir := r.URL.Query().Get("sdir")
+			xdata := TagVideoPage(xip, port, video, exefile, exefilea, drive, wdir, sdir)
+			fmt.Fprint(w, xdata)
+
+		})
+
 		//------------------------------------------------- Static Handler Handler
 		fs := http.FileServer(http.Dir("static/"))
 		http.Handle("/static/", http.StripPrefix("/static/", fs))
@@ -1565,97 +1584,6 @@ func PlayVideoPage(xip string, port string, video string, exefile string, exefil
 }
 
 // ----------------------------------------------------------------
-func TagVideoPage(xip string, port string, video string, exefile string, exefilea string, drive string, wdir string, sdir string) string {
-	//---------------------------------------------------------------------------
-	//----------------------------------------------------------------------------
-	xdata := "<!DOCTYPE html>"
-	xdata = xdata + "<html>"
-	xdata = xdata + "<head>"
-	//------------------------------------------------------------------------
-	xdata = xdata + "<title>Tag Video Page</title>"
-	//------------------------------------------------------------------------
-	xdata = DateTimeDisplay(xdata)
-	xdata = xdata + "<style>"
-	xdata = xdata + "body {"
-	xdata = xdata + "    background-color: white;"
-	xdata = xdata + "}"
-	xdata = xdata + "	h1 {"
-	xdata = xdata + "	color: black;"
-	xdata = xdata + "	text-align: center;"
-	xdata = xdata + "}"
-	xdata = xdata + "	p1 {"
-	xdata = xdata + "color: green;"
-	xdata = xdata + "font-family: verdana;"
-	xdata = xdata + "	font-size: 20px;"
-	xdata = xdata + "}"
-	xdata = xdata + "	p2 {"
-	xdata = xdata + "color: red;"
-	xdata = xdata + "font-family: verdana;"
-	xdata = xdata + "	font-size: 20px;"
-	xdata = xdata + "}"
-	xdata = xdata + "	div {"
-	xdata = xdata + "color: white;"
-	xdata = xdata + "font-family: verdana;"
-	xdata = xdata + "	font-size: 20px;"
-	xdata = xdata + "	text-align: center;"
-	xdata = xdata + "}"
-	xdata = xdata + "</style>"
-	xdata = xdata + "</head>"
-	//------------------------------------------------------------------------
-	xdata = xdata + "<body onload='startTime()'>"
-	xdata = xdata + "<H1>Tag Video Page</H1>"
-	xdata = xdata + "<div id='txtdt'></div>"
-	//---------
-	xdata = xdata + "<center>"
-	xdata = xdata + "<p2>Video Web Server</p2>"
-	xdata = xdata + "<BR>"
-	xdata = xdata + "<p1>Video " + video + "</p1>"
-	xdata = xdata + "<BR>"
-	xdata = xdata + "</center>"
-	//------------------------------------------------------------------------
-
-	xdata = xdata + "  <A HREF='http://" + xip + ":8080/selecttag'> [ Add Tag ] </A>  "
-
-	table, err := dbase.OpenTable(&dbase.Config{
-		Filename:   "VIDEOS.DBF",
-		TrimSpaces: true,
-	})
-	if err != nil {
-		panic(err)
-	}
-	defer table.Close()
-
-	field, err := table.NewFieldByName("VIDEO", video)
-	if err != nil {
-		panic(err)
-	}
-
-	records, err := table.Search(field, false)
-	if err != nil {
-		panic(err)
-	}
-
-	// Print all found records.
-	fmt.Println("Found records with match:")
-	for _, record := range records {
-		field = record.FieldByName("VIDEO")
-		if field == nil {
-			panic("Field not found")
-		}
-
-		fmt.Printf("%v \n", field.GetValue())
-	}
-
-	//------------------------------------------------------------------------
-	xdata = xdata + " </body>"
-	xdata = xdata + " </html>"
-	//------------------------------------------------------------------------
-
-	return xdata
-
-}
-
-// ----------------------------------------------------------------
 func MoveVideoPage(xip string, port string, video string, exefile string, exefilea string, drive string, wdir string, sdir string, subdir bool) string {
 	//---------------------------------------------------------------------------
 	//----------------------------------------------------------------------------
@@ -1825,6 +1753,182 @@ func MoveVideoCompletePage(xip string, port string, video string, exefile string
 		return xdata
 	}
 	//---------------------------------------------------------------------------
+
+	return xdata
+
+}
+
+// ----------------------------------------------------------------
+func TagVideoPage(xip string, port string, video string, exefile string, exefilea string, drive string, wdir string, sdir string) string {
+	//---------------------------------------------------------------------------
+	//----------------------------------------------------------------------------
+	xdata := "<!DOCTYPE html>"
+	xdata = xdata + "<html>"
+	xdata = xdata + "<head>"
+	//------------------------------------------------------------------------
+	xdata = xdata + "<title>Tag Video Page</title>"
+	//------------------------------------------------------------------------
+	xdata = DateTimeDisplay(xdata)
+	xdata = xdata + "<style>"
+	xdata = xdata + "body {"
+	xdata = xdata + "    background-color: white;"
+	xdata = xdata + "}"
+	xdata = xdata + "	h1 {"
+	xdata = xdata + "	color: black;"
+	xdata = xdata + "	text-align: center;"
+	xdata = xdata + "}"
+	xdata = xdata + "	p1 {"
+	xdata = xdata + "color: green;"
+	xdata = xdata + "font-family: verdana;"
+	xdata = xdata + "	font-size: 20px;"
+	xdata = xdata + "}"
+	xdata = xdata + "	p2 {"
+	xdata = xdata + "color: red;"
+	xdata = xdata + "font-family: verdana;"
+	xdata = xdata + "	font-size: 20px;"
+	xdata = xdata + "}"
+	xdata = xdata + "	div {"
+	xdata = xdata + "color: white;"
+	xdata = xdata + "font-family: verdana;"
+	xdata = xdata + "	font-size: 20px;"
+	xdata = xdata + "	text-align: center;"
+	xdata = xdata + "}"
+	xdata = xdata + "</style>"
+	xdata = xdata + "</head>"
+	//------------------------------------------------------------------------
+	xdata = xdata + "<body onload='startTime()'>"
+	xdata = xdata + "<H1>Tag Video Page</H1>"
+	xdata = xdata + "<div id='txtdt'></div>"
+	//---------
+	xdata = xdata + "<center>"
+	xdata = xdata + "<p2>Video Web Server</p2>"
+	xdata = xdata + "<BR>"
+	xdata = xdata + "<p1>Video " + video + "</p1>"
+	xdata = xdata + "<BR>"
+	//------------------------------------------------------------------------
+
+	xdata = xdata + "  <A HREF='http://" + xip + ":8080/selecttag?video=" + video + "'> [ Add Tag ] </A>  "
+
+	table, err := dbase.OpenTable(&dbase.Config{
+		Filename:   "VIDEOS.DBF",
+		TrimSpaces: true,
+	})
+	if err != nil {
+		panic(err)
+	}
+	defer table.Close()
+
+	field, err := table.NewFieldByName("VIDEO", video)
+	if err != nil {
+		panic(err)
+	}
+
+	records, err := table.Search(field, false)
+	if err != nil {
+		panic(err)
+	}
+
+	// Print all found records.
+	fmt.Println("Found records with match:")
+	for _, record := range records {
+		field = record.FieldByName("VIDEO")
+		if field == nil {
+			panic("Field not found")
+		}
+
+		fmt.Printf("%v \n", field.GetValue())
+	}
+	xdata = xdata + "</center>"
+
+	//------------------------------------------------------------------------
+	xdata = xdata + " </body>"
+	xdata = xdata + " </html>"
+	//------------------------------------------------------------------------
+
+	return xdata
+
+}
+
+// ----------------------------------------------------------------
+func SelectTagPage(xip string, port string, video string, exefile string, exefilea string, drive string, wdir string, sdir string) string {
+	//---------------------------------------------------------------------------
+	//----------------------------------------------------------------------------
+	xdata := "<!DOCTYPE html>"
+	xdata = xdata + "<html>"
+	xdata = xdata + "<head>"
+	//------------------------------------------------------------------------
+	xdata = xdata + "<title>Tag Video Page</title>"
+	//------------------------------------------------------------------------
+	xdata = DateTimeDisplay(xdata)
+	xdata = xdata + "<style>"
+	xdata = xdata + "body {"
+	xdata = xdata + "    background-color: white;"
+	xdata = xdata + "}"
+	xdata = xdata + "	h1 {"
+	xdata = xdata + "	color: black;"
+	xdata = xdata + "	text-align: center;"
+	xdata = xdata + "}"
+	xdata = xdata + "	p1 {"
+	xdata = xdata + "color: green;"
+	xdata = xdata + "font-family: verdana;"
+	xdata = xdata + "	font-size: 20px;"
+	xdata = xdata + "}"
+	xdata = xdata + "	p2 {"
+	xdata = xdata + "color: red;"
+	xdata = xdata + "font-family: verdana;"
+	xdata = xdata + "	font-size: 20px;"
+	xdata = xdata + "}"
+	xdata = xdata + "	div {"
+	xdata = xdata + "color: white;"
+	xdata = xdata + "font-family: verdana;"
+	xdata = xdata + "	font-size: 20px;"
+	xdata = xdata + "	text-align: center;"
+	xdata = xdata + "}"
+	xdata = xdata + "</style>"
+	xdata = xdata + "</head>"
+	//------------------------------------------------------------------------
+	xdata = xdata + "<body onload='startTime()'>"
+	xdata = xdata + "<H1>Tag Video Page</H1>"
+	xdata = xdata + "<div id='txtdt'></div>"
+	//---------
+	xdata = xdata + "<center>"
+	xdata = xdata + "<p2>Select Tag</p2>"
+	xdata = xdata + "<BR>"
+	xdata = xdata + "<p1>Video " + video + "</p1>"
+	xdata = xdata + "<BR>"
+
+	table, err := dbase.OpenTable(&dbase.Config{
+		Filename:   "TAGS.DBF",
+		TrimSpaces: true,
+	})
+	if err != nil {
+		panic(err)
+	}
+	defer table.Close()
+	recno := 0
+	for !table.EOF() {
+		row, err := table.Next()
+		if err != nil {
+			panic(err)
+		}
+		//field := row.FieldByName("tag")
+		field := row.Field(0)
+		if field == nil {
+			panic("Field not found")
+		}
+		s := fmt.Sprintf("%v", field.GetValue())
+		xdata = xdata + "  <A HREF='http://" + xip + ":8080/selectcomplete?video=" + video + "?recno=" + strconv.Itoa(recno) + "'> [ " + s + " ] </A>  "
+		xdata = xdata + "<BR>"
+		recno++
+
+	}
+	//------------------------------------------------------------------------
+	xdata = xdata + "</center>"
+
+	//------------------------------------------------------------------------
+	xdata = xdata + " </body>"
+	xdata = xdata + " </html>"
+	//------------------------------------------------------------------------
 
 	return xdata
 
