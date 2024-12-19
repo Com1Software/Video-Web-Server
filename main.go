@@ -177,8 +177,9 @@ func main() {
 		//------------------------------------------------ Tag Video Page Handler
 		http.HandleFunc("/tagvideo", func(w http.ResponseWriter, r *http.Request) {
 			video := r.URL.Query().Get("video")
+			page := r.URL.Query().Get("page")
 			sdir := r.URL.Query().Get("sdir")
-			xdata := TagVideoPage(xip, port, video, exefile, exefilea, drive, wdir, sdir)
+			xdata := TagVideoPage(xip, port, video, exefile, exefilea, drive, wdir, sdir, page)
 			fmt.Fprint(w, xdata)
 
 		})
@@ -187,7 +188,8 @@ func main() {
 		http.HandleFunc("/selecttag", func(w http.ResponseWriter, r *http.Request) {
 			video := r.URL.Query().Get("video")
 			sdir := r.URL.Query().Get("sdir")
-			xdata := SelectTagPage(xip, port, video, exefile, exefilea, drive, wdir, sdir)
+			page := r.URL.Query().Get("page")
+			xdata := SelectTagPage(xip, port, video, exefile, exefilea, drive, wdir, sdir, page)
 			fmt.Fprint(w, xdata)
 
 		})
@@ -196,7 +198,8 @@ func main() {
 		http.HandleFunc("/selectcomplete", func(w http.ResponseWriter, r *http.Request) {
 			video := r.URL.Query().Get("video")
 			sdir := r.URL.Query().Get("sdir")
-			xdata := TagVideoPage(xip, port, video, exefile, exefilea, drive, wdir, sdir)
+			page := r.URL.Query().Get("page")
+			xdata := TagVideoPage(xip, port, video, exefile, exefilea, drive, wdir, sdir, page)
 			fmt.Fprint(w, xdata)
 
 		})
@@ -1447,7 +1450,7 @@ func DisplayPage(subdir bool, xip string, port string, page string, sdir string,
 					xdata = xdata + "<TABLE>"
 					xdata = xdata + "<TD with='200'>"
 					xdata = xdata + "<center>"
-					xdata = xdata + " <A HREF='http://" + xip + ":8080/tagvideo?video=" + file.Name() + "&sdir=" + sdir + "'> [ Video Tags ] </A>  "
+					xdata = xdata + " <A HREF='http://" + xip + ":8080/tagvideo?page=" + strconv.Itoa(pg) + "&video=" + file.Name() + "&sdir=" + sdir + "'> [ Video Tags ] </A>  "
 					xdata = xdata + "</center>"
 					xdata = xdata + "</TD>"
 					xdata = xdata + "<TD with='200'>"
@@ -1759,7 +1762,7 @@ func MoveVideoCompletePage(xip string, port string, video string, exefile string
 }
 
 // ----------------------------------------------------------------
-func TagVideoPage(xip string, port string, video string, exefile string, exefilea string, drive string, wdir string, sdir string) string {
+func TagVideoPage(xip string, port string, video string, exefile string, exefilea string, drive string, wdir string, sdir string, page string) string {
 	//---------------------------------------------------------------------------
 	//----------------------------------------------------------------------------
 	xdata := "<!DOCTYPE html>"
@@ -1807,7 +1810,9 @@ func TagVideoPage(xip string, port string, video string, exefile string, exefile
 	xdata = xdata + "<BR>"
 	//------------------------------------------------------------------------
 
-	xdata = xdata + "  <A HREF='http://" + xip + ":8080/selecttag?video=" + video + "'> [ Add Tag ] </A>  "
+	xdata = xdata + "  <A HREF='http://" + xip + ":8080/display?page=" + page + "&sdir=" + sdir + "'> [ Return to Video Display Page ] </A><BR>  "
+
+	xdata = xdata + "  <A HREF='http://" + xip + ":8080/selecttag?page=" + page + "&sdir=" + sdir + "&video=" + video + "'> [ Add Tag ] </A>  "
 
 	table, err := dbase.OpenTable(&dbase.Config{
 		Filename:   "VIDEOS.DBF",
@@ -1850,7 +1855,7 @@ func TagVideoPage(xip string, port string, video string, exefile string, exefile
 }
 
 // ----------------------------------------------------------------
-func SelectTagPage(xip string, port string, video string, exefile string, exefilea string, drive string, wdir string, sdir string) string {
+func SelectTagPage(xip string, port string, video string, exefile string, exefilea string, drive string, wdir string, sdir string, page string) string {
 	//---------------------------------------------------------------------------
 	//----------------------------------------------------------------------------
 	xdata := "<!DOCTYPE html>"
@@ -1917,7 +1922,7 @@ func SelectTagPage(xip string, port string, video string, exefile string, exefil
 			panic("Field not found")
 		}
 		s := fmt.Sprintf("%v", field.GetValue())
-		xdata = xdata + "  <A HREF='http://" + xip + ":8080/selectcomplete?video=" + video + "?recno=" + strconv.Itoa(recno) + "'> [ " + s + " ] </A>  "
+		xdata = xdata + "  <A HREF='http://" + xip + ":8080/selectcomplete?page=" + page + "&sdir=" + sdir + "&video=" + video + "&recno=" + strconv.Itoa(recno) + "'> [ " + s + " ] </A>  "
 		xdata = xdata + "<BR>"
 		recno++
 
