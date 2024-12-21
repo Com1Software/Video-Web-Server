@@ -199,6 +199,44 @@ func main() {
 			video := r.URL.Query().Get("video")
 			sdir := r.URL.Query().Get("sdir")
 			page := r.URL.Query().Get("page")
+			tag := r.URL.Query().Get("tag")
+			fmt.Println(tag)
+			if len(tag) > 0 {
+				table, err := dbase.OpenTable(&dbase.Config{
+					Filename:   "VIDEOS.DBF",
+					TrimSpaces: true,
+					WriteLock:  true,
+				})
+				if err != nil {
+					panic(err)
+				}
+				defer table.Close()
+				row, err := table.Row()
+				if err != nil {
+					panic(err)
+				}
+				p := Tags{
+					Tag: tag,
+				}
+
+				row, err = table.RowFromStruct(p)
+				if err != nil {
+					panic(err)
+				}
+				err = row.FieldByName("TAG").SetValue(tag)
+				if err != nil {
+					panic(err)
+				}
+				err = row.FieldByName("VIDEO").SetValue(video)
+				if err != nil {
+					panic(err)
+				}
+
+				err = row.Write()
+				if err != nil {
+					panic(err)
+				}
+			}
 			xdata := TagVideoPage(xip, port, video, exefile, exefilea, drive, wdir, sdir, page)
 			fmt.Fprint(w, xdata)
 
@@ -301,6 +339,25 @@ func TableCheck() {
 			panic(err)
 		}
 		defer file.Close()
+
+		row, err := file.RowFromStruct(&Tags{
+			Tag: "TAG",
+		})
+		if err != nil {
+			panic(err)
+		}
+
+		err = row.Add()
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf(
+			"Last modified: %v Columns count: %v Record count: %v File size: %v \n",
+			file.Header().Modified(0),
+			file.Header().ColumnsCount(),
+			file.Header().RecordsCount(),
+			file.Header().FileSize(),
+		)
 
 	}
 
@@ -1812,7 +1869,7 @@ func TagVideoPage(xip string, port string, video string, exefile string, exefile
 
 	xdata = xdata + "  <A HREF='http://" + xip + ":8080/display?page=" + page + "&sdir=" + sdir + "'> [ Return to Video Display Page ] </A><BR>  "
 
-	xdata = xdata + "  <A HREF='http://" + xip + ":8080/selecttag?page=" + page + "&sdir=" + sdir + "&video=" + video + "'> [ Add Tag ] </A>  "
+	xdata = xdata + "  <A HREF='http://" + xip + ":8080/selecttag?page=" + page + "&sdir=" + sdir + "&video=" + video + "'> [ Add Tag ] </A> <BR> "
 
 	table, err := dbase.OpenTable(&dbase.Config{
 		Filename:   "VIDEOS.DBF",
@@ -1836,12 +1893,15 @@ func TagVideoPage(xip string, port string, video string, exefile string, exefile
 	// Print all found records.
 	fmt.Println("Found records with match:")
 	for _, record := range records {
-		field = record.FieldByName("VIDEO")
+		field = record.FieldByName("TAG")
 		if field == nil {
 			panic("Field not found")
 		}
 
-		fmt.Printf("%v \n", field.GetValue())
+		tag := fmt.Sprintf("%v \n", field.GetValue())
+
+		xdata = xdata + "  <A HREF='http://" + xip + ":8080/videotagedit?page=" + page + "&sdir=" + sdir + "&video=" + video + "'> [ " + tag + " ] </A><BR>  "
+
 	}
 	xdata = xdata + "</center>"
 
@@ -1922,7 +1982,7 @@ func SelectTagPage(xip string, port string, video string, exefile string, exefil
 			panic("Field not found")
 		}
 		s := fmt.Sprintf("%v", field.GetValue())
-		xdata = xdata + "  <A HREF='http://" + xip + ":8080/selectcomplete?page=" + page + "&sdir=" + sdir + "&video=" + video + "&recno=" + strconv.Itoa(recno) + "'> [ " + s + " ] </A>  "
+		xdata = xdata + "  <A HREF='http://" + xip + ":8080/selectcomplete?page=" + page + "&sdir=" + sdir + "&video=" + video + "&recno=" + strconv.Itoa(recno) + "&tag=" + s + "'> [ " + s + " ] </A>  "
 		xdata = xdata + "<BR>"
 		recno++
 
