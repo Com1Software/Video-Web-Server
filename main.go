@@ -211,6 +211,7 @@ func main() {
 					panic(err)
 				}
 				defer table.Close()
+				nr := table.Header().RecordsCount()
 				row, err := table.Row()
 				if err != nil {
 					panic(err)
@@ -232,6 +233,11 @@ func main() {
 					panic(err)
 				}
 
+				err = row.FieldByName("RECORD").SetValue(int32(nr))
+				if err != nil {
+					panic(err)
+				}
+
 				err = row.Write()
 				if err != nil {
 					panic(err)
@@ -239,6 +245,38 @@ func main() {
 			}
 			xdata := TagVideoPage(xip, port, video, exefile, exefilea, drive, wdir, sdir, page)
 			fmt.Fprint(w, xdata)
+
+		})
+
+		//------------------------------------------------ Video Tag Edit Page Handler
+		http.HandleFunc("/videotagedit", func(w http.ResponseWriter, r *http.Request) {
+			tag := r.URL.Query().Get("tag")
+			video := r.URL.Query().Get("video")
+			recno := r.URL.Query().Get("recno")
+			rated := r.URL.Query().Get("rated")
+			xdata := VideoTagEditPage(xip, video, tag, recno, rated)
+			fmt.Fprint(w, xdata)
+
+		})
+
+		//------------------------------------------------ Search Page Handler
+		http.HandleFunc("/search", func(w http.ResponseWriter, r *http.Request) {
+			xdata := SearchPage(xip)
+			fmt.Fprint(w, xdata)
+
+		})
+
+		http.HandleFunc("/findvideo", func(w http.ResponseWriter, r *http.Request) {
+			tag := r.FormValue("map")
+			fmt.Println(tag)
+		})
+		//------------------------------------------- Video Search Page Handler
+		http.HandleFunc("/videosearch", func(w http.ResponseWriter, r *http.Request) {
+			tag := r.URL.Query().Get("map")
+			fmt.Println(tag)
+			fmt.Println("test")
+			//		xdata := SearchPage(xip)
+			//		fmt.Fprint(w, xdata)
 
 		})
 
@@ -379,6 +417,8 @@ func vcolumns() []*dbase.Column {
 	tagCol, err := dbase.NewColumn("Tag", dbase.Varchar, 80, 0, false)
 	videoCol, err := dbase.NewColumn("Video", dbase.Varchar, 254, 0, false)
 	ratedCol, err := dbase.NewColumn("Rated", dbase.Integer, 2, 0, false)
+	recposCol, err := dbase.NewColumn("Record", dbase.Integer, 10, 0, false)
+
 	if err != nil {
 		panic(err)
 	}
@@ -386,6 +426,7 @@ func vcolumns() []*dbase.Column {
 		tagCol,
 		videoCol,
 		ratedCol,
+		recposCol,
 	}
 }
 
@@ -1897,10 +1938,19 @@ func TagVideoPage(xip string, port string, video string, exefile string, exefile
 		if field == nil {
 			panic("Field not found")
 		}
-
 		tag := fmt.Sprintf("%v \n", field.GetValue())
+		field = record.FieldByName("RECORD")
+		if field == nil {
+			panic("Field not found")
+		}
+		recno := fmt.Sprintf("%d \n", field.GetValue())
+		field = record.FieldByName("RATED")
+		if field == nil {
+			panic("Field not found")
+		}
+		rated := fmt.Sprintf("%d \n", field.GetValue())
 
-		xdata = xdata + "  <A HREF='http://" + xip + ":8080/videotagedit?page=" + page + "&sdir=" + sdir + "&video=" + video + "'> [ " + tag + " ] </A><BR>  "
+		xdata = xdata + "  <A HREF='http://" + xip + ":8080/videotagedit?page=" + page + "&sdir=" + sdir + "&recno=" + recno + "&rated=" + rated + "&video=" + video + "'> [ " + tag + " ] </A><BR>  "
 
 	}
 	xdata = xdata + "</center>"
@@ -1997,4 +2047,83 @@ func SelectTagPage(xip string, port string, video string, exefile string, exefil
 
 	return xdata
 
+}
+
+// ----------------------------------------------------------------
+func VideoTagEditPage(xip string, video string, tag string, recno string, rated string) string {
+	//----------------------------------------------------------------------------
+	xdata := "<!DOCTYPE html>"
+	xdata = xdata + "<html>"
+	xdata = xdata + "<head>"
+	//------------------------------------------------------------------------
+	xdata = xdata + "<title>Video Tag Edit Page</title>"
+	xdata = LoopDisplay(xdata)
+	//------------------------------------------------------------------------
+	xdata = DateTimeDisplay(xdata)
+	xdata = xdata + "</head>"
+	//------------------------------------------------------------------------
+	xdata = xdata + "<body onload='startTime()'>"
+	xdata = xdata + "<center>"
+	xdata = xdata + "<H3>Video Tag Edit</H3>"
+	xdata = xdata + "<div id='txtdt'></div>"
+	//---------
+	xdata = xdata + "<BR><BR>"
+	//------------------------------------------------------------------------
+	xdata = xdata + "  <A HREF='http://" + xip + ":8080'> [ Return to Start Page ] </A>  "
+	xdata = xdata + "<BR><BR>"
+	xdata = xdata + "Video Tags"
+
+	table, err := dbase.OpenTable(&dbase.Config{
+		Filename:   "VIDEOS.DBF",
+		TrimSpaces: true,
+	})
+	if err != nil {
+		panic(err)
+	}
+	defer table.Close()
+
+	//------------------------------------------------------------------------
+	xdata = xdata + " Tag Rated "
+	xdata = xdata + "<form action='/videotagupdate?recno=" + rated + "' method='post'>"
+	xdata = xdata + "<textarea id='tag' name='tag' rows='1' cols='20'>" + rated + "</textarea>"
+	xdata = xdata + "<BR><BR>"
+	xdata = xdata + "<input type='submit' value='Update Tag Rating'/>"
+	xdata = xdata + "</form>"
+	xdata = xdata + "<BR><BR>"
+	xdata = xdata + "<BR>"
+
+	return xdata
+}
+
+// ----------------------------------------------------------------
+func SearchPage(xip string) string {
+	//----------------------------------------------------------------------------
+	xdata := "<!DOCTYPE html>"
+	xdata = xdata + "<html>"
+	xdata = xdata + "<head>"
+	//------------------------------------------------------------------------
+	xdata = xdata + "<title>Search Page</title>"
+	xdata = LoopDisplay(xdata)
+	//------------------------------------------------------------------------
+	xdata = DateTimeDisplay(xdata)
+	xdata = xdata + "</head>"
+	//------------------------------------------------------------------------
+	xdata = xdata + "<body onload='startTime()'>"
+	xdata = xdata + "<center>"
+	xdata = xdata + "<H3>Video Search Page</H3>"
+	xdata = xdata + "<div id='txtdt'></div>"
+	//---------
+	xdata = xdata + "<BR><BR>"
+	//------------------------------------------------------------------------
+	xdata = xdata + "  <A HREF='http://" + xip + ":8080'> [ Return to Start Page ] </A>  "
+	xdata = xdata + "<BR><BR>"
+	xdata = xdata + " Find Video : "
+
+	xdata = xdata + "<form action='/findvideo' method='post'>"
+	xdata = xdata + "<textarea id='map' name='map' rows='1' cols='20'></textarea>"
+	xdata = xdata + "<BR><BR>"
+	xdata = xdata + "<input type='submit' value='Find Video'/>"
+	xdata = xdata + "</form>"
+
+	return xdata
 }
