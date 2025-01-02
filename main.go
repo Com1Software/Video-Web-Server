@@ -232,6 +232,10 @@ func main() {
 				if err != nil {
 					panic(err)
 				}
+				err = row.FieldByName("FOLDER").SetValue(sdir)
+				if err != nil {
+					panic(err)
+				}
 
 				err = row.FieldByName("RECORD").SetValue(int32(nr))
 				if err != nil {
@@ -289,10 +293,10 @@ func main() {
 
 		})
 
-		//------------------------------------------------ Category Display Edit Page Handler
+		//------------------------------------------------ Category Display Page Handler
 		http.HandleFunc("/categorydisplay", func(w http.ResponseWriter, r *http.Request) {
-			recno := r.URL.Query().Get("recno")
-			xdata := CategoryDisplayPage(xip, recno)
+			tag := r.URL.Query().Get("tag")
+			xdata := CategoryDisplayPage(xip, exefile, exefilea, tag, wdir)
 			fmt.Fprint(w, xdata)
 
 		})
@@ -433,6 +437,7 @@ func vcolumns() []*dbase.Column {
 
 	tagCol, err := dbase.NewColumn("Tag", dbase.Varchar, 80, 0, false)
 	videoCol, err := dbase.NewColumn("Video", dbase.Varchar, 254, 0, false)
+	folderCol, err := dbase.NewColumn("Folder", dbase.Varchar, 254, 0, false)
 	ratedCol, err := dbase.NewColumn("Rated", dbase.Integer, 2, 0, false)
 	recposCol, err := dbase.NewColumn("Record", dbase.Integer, 10, 0, false)
 
@@ -442,6 +447,7 @@ func vcolumns() []*dbase.Column {
 	return []*dbase.Column{
 		tagCol,
 		videoCol,
+		folderCol,
 		ratedCol,
 		recposCol,
 	}
@@ -2205,7 +2211,6 @@ func CategoriesPage(xip string) string {
 		panic(err)
 	}
 	defer table.Close()
-	recno := 0
 	for !table.EOF() {
 		row, err := table.Next()
 		if err != nil {
@@ -2217,16 +2222,16 @@ func CategoriesPage(xip string) string {
 			panic("Field not found")
 		}
 		s := fmt.Sprintf("%v", field.GetValue())
-		xdata = xdata + "  <A HREF='http://" + xip + ":8080/categorydisplay?recno=" + strconv.Itoa(recno) + "'> [ " + s + " ] </A>  "
+		xdata = xdata + "  <A HREF='http://" + xip + ":8080/categorydisplay?tag=" + s + "'> [ " + s + " ] </A>  "
 		xdata = xdata + "<BR>"
-		recno++
 
 	}
 	return xdata
 }
 
 // ----------------------------------------------------------------
-func CategoryDisplayPage(xip string, recno string) string {
+func CategoryDisplayPage(xip string, exefile string, exefilea string, tag string, wdir string) string {
+
 	//----------------------------------------------------------------------------
 	xdata := "<!DOCTYPE html>"
 	xdata = xdata + "<html>"
@@ -2237,39 +2242,79 @@ func CategoryDisplayPage(xip string, recno string) string {
 	//------------------------------------------------------------------------
 	xdata = DateTimeDisplay(xdata)
 	xdata = xdata + "</head>"
-	table, err := dbase.OpenTable(&dbase.Config{
-		Filename:   "TAGS.DBF",
-		TrimSpaces: true,
-	})
-	if err != nil {
-		panic(err)
-	}
-	defer table.Close()
-	rn, _ := strconv.Atoi(recno)
-	err = table.GoTo(uint32(rn))
-	if err != nil {
-		panic(err)
-	}
-	row, err := table.Row()
-	if err != nil {
-		panic(err)
-	}
-	field := row.Field(0)
-	if field == nil {
-		panic("Field not found")
-	}
-	s := fmt.Sprintf("%v", field.GetValue())
 
 	//------------------------------------------------------------------------
 	xdata = xdata + "<body onload='startTime()'>"
 	xdata = xdata + "<center>"
-	xdata = xdata + "<H3>" + s + " Videos</H3>"
+	xdata = xdata + "<H3>" + tag + " Videos</H3>"
 	xdata = xdata + "<div id='txtdt'></div>"
 	//---------
 	xdata = xdata + "<BR><BR>"
 	//------------------------------------------------------------------------
 	xdata = xdata + "  <A HREF='http://" + xip + ":8080'> [ Return to Start Page ] </A>  "
 	xdata = xdata + "<BR><BR>"
+	table, err := dbase.OpenTable(&dbase.Config{
+		Filename:   "VIDEOS.DBF",
+		TrimSpaces: true,
+		WriteLock:  true,
+	})
+	if err != nil {
+		panic(err)
+	}
+	defer table.Close()
+
+	for !table.EOF() {
+		row, err := table.Next()
+		if err != nil {
+			panic(err)
+		}
+		vtag := row.Field(0)
+		if vtag == nil {
+			panic("Field not found")
+		}
+
+		vt := fmt.Sprintf("%v", vtag.GetValue())
+		if vt == tag {
+			vid := row.Field(1)
+			if vid == nil {
+				panic("Field not found")
+			}
+			v := fmt.Sprintf("%v", vid.GetValue())
+			dir := row.Field(2)
+			if dir == nil {
+				panic("Field not found")
+			}
+			s := fmt.Sprintf("%v", dir.GetValue())
+
+			fmt.Println("test")
+			tfile := wdir + s + "/" + v
+			tnfile := fixFileName(tfile)
+			fmt.Println(tnfile)
+			tp1 := TimePosition(exefilea, tnfile, 1)
+			tp2 := TimePosition(exefilea, tnfile, 2)
+			tp3 := TimePosition(exefilea, tnfile, 3)
+			pfc := 1
+
+			cmd := exec.Command(exefile, "-ss", tp1, "-i", tnfile, "-vframes", "100", "-s", "128x96", "static/"+strconv.Itoa(pfc)+"1.png")
+			if err := cmd.Run(); err != nil {
+				fmt.Printf("Command %s \n Error: %s\n", cmd, err)
+			}
+
+			cmd = exec.Command(exefile, "-ss", tp2, "-i", tnfile, "-vframes", "100", "-s", "128x96", "static/"+strconv.Itoa(pfc)+"2.png")
+			if err := cmd.Run(); err != nil {
+				fmt.Printf("Command %s \n Error: %s\n", cmd, err)
+			}
+			cmd = exec.Command(exefile, "-ss", tp3, "-i", tnfile, "-vframes", "100", "-s", "128x96", "static/"+strconv.Itoa(pfc)+"3.png")
+			if err := cmd.Run(); err != nil {
+				fmt.Printf("Command %s \n Error: %s\n", cmd, err)
+			}
+
+			xdata = xdata + "  <A HREF='http://" + xip + ":8080/playvideo?sdir=" + s + "&video= " + v + "'> [ " + v + " ] <BR> <IMG SRC=static/" + strconv.Itoa(pfc) + "1.png ALT=test123> <IMG SRC=static/" + strconv.Itoa(pfc) + "2.png  ALT=xerror> <IMG SRC=static/" + strconv.Itoa(pfc) + "3.png  ALT=error> </A>  "
+			xdata = xdata + "<BR>"
+		}
+		//	recno++
+
+	}
 
 	xdata = xdata + "<BR>"
 
