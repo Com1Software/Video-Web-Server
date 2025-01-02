@@ -269,6 +269,8 @@ func main() {
 		http.HandleFunc("/findvideo", func(w http.ResponseWriter, r *http.Request) {
 			tag := r.FormValue("map")
 			fmt.Println(tag)
+			xdata := SearchResultsPage(xip, tag)
+			fmt.Fprint(w, xdata)
 		})
 		//------------------------------------------- Video Search Page Handler
 		http.HandleFunc("/videosearch", func(w http.ResponseWriter, r *http.Request) {
@@ -277,6 +279,21 @@ func main() {
 			fmt.Println("test")
 			//		xdata := SearchPage(xip)
 			//		fmt.Fprint(w, xdata)
+
+		})
+
+		//------------------------------------------------ Categories Page Handler
+		http.HandleFunc("/categories", func(w http.ResponseWriter, r *http.Request) {
+			xdata := CategoriesPage(xip)
+			fmt.Fprint(w, xdata)
+
+		})
+
+		//------------------------------------------------ Category Display Edit Page Handler
+		http.HandleFunc("/categorydisplay", func(w http.ResponseWriter, r *http.Request) {
+			recno := r.URL.Query().Get("recno")
+			xdata := CategoryDisplayPage(xip, recno)
+			fmt.Fprint(w, xdata)
 
 		})
 
@@ -1095,6 +1112,7 @@ func InitPage(xip string) string {
 
 	xdata = xdata + "  <A HREF='http://" + xip + ":8080/about'> [ About ] </A>  "
 	xdata = xdata + "  <A HREF='http://" + xip + ":8080/display?page=1'> [ Display ] </A>  "
+	xdata = xdata + "  <A HREF='http://" + xip + ":8080/categories'> [ Categories ] </A>  "
 	xdata = xdata + "  <A HREF='http://" + xip + ":8080/search'> [ Search ] </A>  "
 	xdata = xdata + "  <A HREF='http://" + xip + ":8080/tags'> [ Tags ] </A>  "
 	xdata = xdata + "  <A HREF='http://" + xip + ":8080/static/index.html'> [ Static Index ] </A>  "
@@ -2124,6 +2142,136 @@ func SearchPage(xip string) string {
 	xdata = xdata + "<BR><BR>"
 	xdata = xdata + "<input type='submit' value='Find Video'/>"
 	xdata = xdata + "</form>"
+
+	return xdata
+}
+
+// ----------------------------------------------------------------
+func SearchResultsPage(xip string, find string) string {
+	//----------------------------------------------------------------------------
+	xdata := "<!DOCTYPE html>"
+	xdata = xdata + "<html>"
+	xdata = xdata + "<head>"
+	//------------------------------------------------------------------------
+	xdata = xdata + "<title>Search Page</title>"
+	xdata = LoopDisplay(xdata)
+	//------------------------------------------------------------------------
+	xdata = DateTimeDisplay(xdata)
+	xdata = xdata + "</head>"
+	//------------------------------------------------------------------------
+	xdata = xdata + "<body onload='startTime()'>"
+	xdata = xdata + "<center>"
+	xdata = xdata + "<H3>Video Search Page</H3>"
+	xdata = xdata + "<div id='txtdt'></div>"
+	//---------
+	xdata = xdata + "<BR><BR>"
+	//------------------------------------------------------------------------
+	xdata = xdata + "  <A HREF='http://" + xip + ":8080/search'> [ Search ] </A><BR>  "
+	xdata = xdata + "  <A HREF='http://" + xip + ":8080'> [ Return to Start Page ] </A>  "
+
+	xdata = xdata + "<BR><BR>"
+	xdata = xdata + " Find Video : "
+
+	return xdata
+}
+
+// ----------------------------------------------------------------
+func CategoriesPage(xip string) string {
+	//----------------------------------------------------------------------------
+	xdata := "<!DOCTYPE html>"
+	xdata = xdata + "<html>"
+	xdata = xdata + "<head>"
+	//------------------------------------------------------------------------
+	xdata = xdata + "<title>Video Categories Page</title>"
+	xdata = LoopDisplay(xdata)
+	//------------------------------------------------------------------------
+	xdata = DateTimeDisplay(xdata)
+	xdata = xdata + "</head>"
+	//------------------------------------------------------------------------
+	xdata = xdata + "<body onload='startTime()'>"
+	xdata = xdata + "<center>"
+	xdata = xdata + "<H3>Categories</H3>"
+	xdata = xdata + "<div id='txtdt'></div>"
+	//---------
+	xdata = xdata + "<BR>"
+	//------------------------------------------------------------------------
+	xdata = xdata + "  <A HREF='http://" + xip + ":8080'> [ Return to Start Page ] </A>  "
+	xdata = xdata + "<BR>"
+	table, err := dbase.OpenTable(&dbase.Config{
+		Filename:   "TAGS.DBF",
+		TrimSpaces: true,
+	})
+	if err != nil {
+		panic(err)
+	}
+	defer table.Close()
+	recno := 0
+	for !table.EOF() {
+		row, err := table.Next()
+		if err != nil {
+			panic(err)
+		}
+		//field := row.FieldByName("tag")
+		field := row.Field(0)
+		if field == nil {
+			panic("Field not found")
+		}
+		s := fmt.Sprintf("%v", field.GetValue())
+		xdata = xdata + "  <A HREF='http://" + xip + ":8080/categorydisplay?recno=" + strconv.Itoa(recno) + "'> [ " + s + " ] </A>  "
+		xdata = xdata + "<BR>"
+		recno++
+
+	}
+	return xdata
+}
+
+// ----------------------------------------------------------------
+func CategoryDisplayPage(xip string, recno string) string {
+	//----------------------------------------------------------------------------
+	xdata := "<!DOCTYPE html>"
+	xdata = xdata + "<html>"
+	xdata = xdata + "<head>"
+	//------------------------------------------------------------------------
+	xdata = xdata + "<title>Category Display Page</title>"
+	xdata = LoopDisplay(xdata)
+	//------------------------------------------------------------------------
+	xdata = DateTimeDisplay(xdata)
+	xdata = xdata + "</head>"
+	table, err := dbase.OpenTable(&dbase.Config{
+		Filename:   "TAGS.DBF",
+		TrimSpaces: true,
+	})
+	if err != nil {
+		panic(err)
+	}
+	defer table.Close()
+	rn, _ := strconv.Atoi(recno)
+	err = table.GoTo(uint32(rn))
+	if err != nil {
+		panic(err)
+	}
+	row, err := table.Row()
+	if err != nil {
+		panic(err)
+	}
+	field := row.Field(0)
+	if field == nil {
+		panic("Field not found")
+	}
+	s := fmt.Sprintf("%v", field.GetValue())
+
+	//------------------------------------------------------------------------
+	xdata = xdata + "<body onload='startTime()'>"
+	xdata = xdata + "<center>"
+	xdata = xdata + "<H3>" + s + " Videos</H3>"
+	xdata = xdata + "<div id='txtdt'></div>"
+	//---------
+	xdata = xdata + "<BR><BR>"
+	//------------------------------------------------------------------------
+	xdata = xdata + "  <A HREF='http://" + xip + ":8080'> [ Return to Start Page ] </A>  "
+	xdata = xdata + "<BR><BR>"
+
+	xdata = xdata + "<BR>"
 
 	return xdata
 }
