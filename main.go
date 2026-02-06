@@ -34,13 +34,13 @@ func main() {
 	exefile := ""
 	exefilea := ""
 
-	drive := "c"
+	drive := "f"
 	wdir := "/tmp/"
 	switch runtime.GOOS {
 	case "windows":
 		exefile = "/ffmpeg/bin/ffmpeg.exe"
 		exefilea = "/ffmpeg/bin/ffprobe.exe"
-		wdir = "/dwhelper/"
+		wdir = drive + ":/dwhelper/"
 
 	case "linux":
 		exefile = "ffmpeg"
@@ -740,6 +740,9 @@ func FileData(exefilea string, tnfile string, fileName string) string {
 
 	bdata := []byte(exefilea + " -i " + tnfile + " -show_entries stream=width,height -of csv=" + fmt.Sprintf("%q", "p=0") + ">tmp.csv")
 	err := os.WriteFile(bfile, bdata, 0777)
+	if runtime.GOOS == "windows" {
+		bfile = "/" + bfile
+	}
 	if runtime.GOOS == "linux" {
 		bfile = "./" + bfile
 	}
