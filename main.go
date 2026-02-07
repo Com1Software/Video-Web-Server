@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"io"
 	"io/ioutil"
 	"log"
@@ -38,8 +39,8 @@ func main() {
 	wdir := "/tmp/"
 	switch runtime.GOOS {
 	case "windows":
-		exefile = "/ffmpeg/bin/ffmpeg.exe"
-		exefilea = "/ffmpeg/bin/ffprobe.exe"
+		exefile = "c:/ffmpeg/bin/ffmpeg.exe"
+		exefilea = "c:/ffmpeg/bin/ffprobe.exe"
 		wdir = drive + ":/dwhelper/"
 
 	case "linux":
@@ -281,7 +282,7 @@ func main() {
 			tag := r.URL.Query().Get("map")
 			fmt.Println(tag)
 			fmt.Println("test")
-			//		xdata := SearchPage(xip)
+
 			//		fmt.Fprint(w, xdata)
 
 		})
@@ -727,93 +728,151 @@ func ParseBitRate(data string) string {
 	return rtn
 }
 
-func FileData(exefilea string, tnfile string, fileName string) string {
+func FileData(ffprobePath string, tnfile string, fileName string) string {
+	fmt.Println("Getting file data for " + fileName)
+
 	xdata := ""
-	bfile := ""
-	switch runtime.GOOS {
-	case "windows":
-		bfile = "tmp.bat"
-	case "linux":
-		bfile = "tmp.sh"
 
+	//----------------------------------------------------------------------
+	// 1. Width & Height
+	//----------------------------------------------------------------------
+	width, height := getResolution(ffprobePath, tnfile)
+	xdata += fmt.Sprintf("Frame width %d<BR>", width)
+	xdata += fmt.Sprintf("Frame height %d<BR>", height)
+
+	//----------------------------------------------------------------------
+	// 2. Duration (seconds)
+	//----------------------------------------------------------------------
+	duration := getDuration(ffprobePath, tnfile)
+	if duration > 0 {
+		min := duration / 60
+		sec := duration % 60
+		xdata += fmt.Sprintf("Length %d:%02d <BR>", min, sec)
+	} else {
+		xdata += "Length unknown<BR>"
 	}
 
-	bdata := []byte(exefilea + " -i " + tnfile + " -show_entries stream=width,height -of csv=" + fmt.Sprintf("%q", "p=0") + ">tmp.csv")
-	err := os.WriteFile(bfile, bdata, 0777)
-	if runtime.GOOS == "windows" {
-		bfile = "/" + bfile
-	}
-	if runtime.GOOS == "linux" {
-		bfile = "./" + bfile
-	}
-	cmd := exec.Command(bfile)
-	if err = cmd.Run(); err != nil {
-		fmt.Printf("Command %s \n Error: %s\n", cmd, err)
-	}
-	dat := []byte("")
-	dat, err = os.ReadFile("tmp.csv")
-	tdata := string(dat)
-	tmp := strings.Split(tdata, ",")
-	xdata = xdata + "Frame width " + tmp[0] + "<BR>"
-	xdata = xdata + "Frame height " + tmp[1] + "<BR>"
+	//----------------------------------------------------------------------
+	// 3. Frame rate
+	//----------------------------------------------------------------------
+	fr := getFrameRate(ffprobePath, tnfile)
+	xdata += fmt.Sprintf("Frames per second %s <BR>", fr)
 
-	//-------------------------------------------------------------------------------------------------
-	bdata = []byte(exefilea + " -i " + tnfile + " -show_entries format=duration -v quiet -of csv >tmp.csv")
-	err = os.WriteFile(bfile, bdata, 0644)
-	cmd = exec.Command(bfile)
-	if err = cmd.Run(); err != nil {
-		fmt.Printf("Command %s \n Error: %s\n", cmd, err)
+	//----------------------------------------------------------------------
+	// 4. Bitrate
+	//----------------------------------------------------------------------
+	br := getBitrate(ffprobePath, tnfile)
+	if br > 0 {
+		xdata += fmt.Sprintf("Bit Rate %d <BR>", br)
+	} else {
+		xdata += "Bit Rate unknown <BR>"
 	}
-	dat = []byte("")
-	dat, err = os.ReadFile("tmp.csv")
-	tdata = string(dat)
-	tmp = strings.Split(tdata, ",")
-	tmpa := strings.Split(tmp[1], ".")
-	t := tmpa[0]
-	i, _ := strconv.Atoi(t)
-	mc := 0
-	m := 0
-	sc := 0
-	for x := 0; x < i; x++ {
-		mc++
-		sc++
-		if mc > 59 {
-			m++
-			mc = 0
-			sc = 0
-		}
 
-	}
-	xdata = xdata + "Length  " + strconv.Itoa(m) + ":" + strconv.Itoa(sc) + " <BR>"
-	//-------------------------------------------------------------------------------------------------
-	bdata = []byte(exefilea + " -i " + tnfile + " -show_entries stream=r_frame_rate  -of csv" + ">tmp.csv")
-
-	err = os.WriteFile(bfile, bdata, 0644)
-	cmd = exec.Command(bfile)
-	if err = cmd.Run(); err != nil {
-		fmt.Printf("Command %s \n Error: %s\n", cmd, err)
-	}
-	dat = []byte("")
-	dat, err = os.ReadFile("tmp.csv")
-	tdata = string(dat)
-	fr := ParseFrameRate(tdata)
-	xdata = xdata + "Frames per second  " + fr + " <BR>"
-
-	//-------------------------------------------------------------------------------------------------
-	bdata = []byte(exefilea + " -i " + tnfile + "  -show_entries stream=bit_rate -v quiet -of csv >tmp.csv")
-	err = os.WriteFile(bfile, bdata, 0644)
-	cmd = exec.Command(bfile)
-	if err = cmd.Run(); err != nil {
-		fmt.Printf("Command %s \n Error: %s\n", cmd, err)
-	}
-	dat = []byte("")
-	dat, err = os.ReadFile("tmp.csv")
-	tdata = string(dat)
-	br := ParseBitRate(tdata)
-	xdata = xdata + "Bit Rate " + br + " <BR>"
-	xdata = xdata + "<BR><BR>"
-
+	xdata += "<BR><BR>"
 	return xdata
+}
+
+func getResolution(ffprobePath, file string) (int, int) {
+	cmd := exec.Command(ffprobePath,
+		"-v", "quiet",
+		"-select_streams", "v:0",
+		"-show_entries", "stream=width,height",
+		"-of", "csv=p=0",
+		file,
+	)
+
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	if err := cmd.Run(); err != nil {
+		fmt.Println("Resolution error:", err)
+		return 0, 0
+	}
+
+	raw := strings.TrimSpace(out.String())
+	parts := strings.Split(raw, ",")
+	if len(parts) < 2 {
+		return 0, 0
+	}
+
+	w, _ := strconv.Atoi(parts[0])
+	h, _ := strconv.Atoi(parts[1])
+	return w, h
+}
+
+func getDuration(ffprobePath, file string) int {
+	cmd := exec.Command(ffprobePath,
+		"-v", "quiet",
+		"-show_entries", "format=duration",
+		"-of", "csv=p=0",
+		file,
+	)
+
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	if err := cmd.Run(); err != nil {
+		fmt.Println("Duration error:", err)
+		return 0
+	}
+
+	raw := strings.TrimSpace(out.String())
+	if raw == "" || raw == "N/A" {
+		return 0
+	}
+
+	raw = strings.Split(raw, ".")[0]
+	sec, _ := strconv.Atoi(raw)
+	return sec
+}
+
+func getFrameRate(ffprobePath, file string) string {
+	cmd := exec.Command(ffprobePath,
+		"-v", "quiet",
+		"-select_streams", "v:0",
+		"-show_entries", "stream=r_frame_rate",
+		"-of", "csv=p=0",
+		file,
+	)
+
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	if err := cmd.Run(); err != nil {
+		fmt.Println("Frame rate error:", err)
+		return "unknown"
+	}
+
+	raw := strings.TrimSpace(out.String())
+	if raw == "" || raw == "N/A" {
+		return "unknown"
+	}
+
+	// ffprobe returns "30000/1001" etc.
+	return raw
+}
+
+func getBitrate(ffprobePath, file string) int {
+	cmd := exec.Command(ffprobePath,
+		"-v", "quiet",
+		"-select_streams", "v:0",
+		"-show_entries", "stream=bit_rate",
+		"-of", "csv=p=0",
+		file,
+	)
+
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	if err := cmd.Run(); err != nil {
+		fmt.Println("Bitrate error:", err)
+		return 0
+	}
+
+	raw := strings.TrimSpace(out.String())
+	if raw == "" || raw == "N/A" {
+		return 0
+	}
+
+	raw = strings.Split(raw, ".")[0]
+	br, _ := strconv.Atoi(raw)
+	return br
 }
 
 func BasicDisplay(exefile string, exefilea string, tnfile string, fileName string, fc int, pfc int, fn string, xip string, sdir string) string {
@@ -852,28 +911,79 @@ func BasicDisplay(exefile string, exefilea string, tnfile string, fileName strin
 		fmt.Printf("Delete Error: %s\n", e)
 	}
 
-	cmd := exec.Command(exefile, "-ss", tp1, "-i", tnfile, "-vframes", "100", "-s", "128x96", "static/"+strconv.Itoa(pfc)+"1.png")
+	cmd := exec.Command(
+		exefile,
+		"-ss", tp1,
+		"-i", tnfile,
+		"-vframes", "1",
+		"-vf", "scale=128:96:force_original_aspect_ratio=decrease",
+		"static/"+strconv.Itoa(pfc)+"1.png",
+	)
 	if err := cmd.Run(); err != nil {
 		fmt.Printf("Command %s \n Error: %s\n", cmd, err)
 	}
 
-	cmd = exec.Command(exefile, "-ss", tp2, "-i", tnfile, "-vframes", "100", "-s", "128x96", "static/"+strconv.Itoa(pfc)+"2.png")
+	cmd = exec.Command(
+		exefile,
+		"-ss", tp2,
+		"-i", tnfile,
+		"-vframes", "1",
+		"-vf", "scale=128:96:force_original_aspect_ratio=decrease",
+		"static/"+strconv.Itoa(pfc)+"2.png",
+	)
 	if err := cmd.Run(); err != nil {
 		fmt.Printf("Command %s \n Error: %s\n", cmd, err)
 	}
-	cmd = exec.Command(exefile, "-ss", tp3, "-i", tnfile, "-vframes", "100", "-s", "128x96", "static/"+strconv.Itoa(pfc)+"3.png")
+
+
+	cmd = exec.Command(
+		exefile,
+		"-ss", tp3,
+		"-i", tnfile,
+		"-vframes", "1",
+		"-vf", "scale=128:96:force_original_aspect_ratio=decrease",
+		"static/"+strconv.Itoa(pfc)+"3.png",
+	)
+        if err := cmd.Run(); err != nil {
+		fmt.Printf("Command %s \n Error: %s\n", cmd, err)
+	}
+
+
+
+	cmd = exec.Command(
+		exefile,
+		"-ss", tp4,
+		"-i", tnfile,
+		"-vframes", "1",
+		"-vf", "scale=128:96:force_original_aspect_ratio=decrease",
+		"static/"+strconv.Itoa(pfc)+"4.png",
+	)
 	if err := cmd.Run(); err != nil {
 		fmt.Printf("Command %s \n Error: %s\n", cmd, err)
 	}
-	cmd = exec.Command(exefile, "-ss", tp4, "-i", tnfile, "-vframes", "100", "-s", "128x96", "static/"+strconv.Itoa(pfc)+"4.png")
+
+
+	cmd = exec.Command(
+		exefile,
+		"-ss", tp5,
+		"-i", tnfile,
+		"-vframes", "1",
+		"-vf", "scale=128:96:force_original_aspect_ratio=decrease",
+		"static/"+strconv.Itoa(pfc)+"5.png",
+	)
+
 	if err := cmd.Run(); err != nil {
 		fmt.Printf("Command %s \n Error: %s\n", cmd, err)
 	}
-	cmd = exec.Command(exefile, "-ss", tp5, "-i", tnfile, "-vframes", "100", "-s", "128x96", "static/"+strconv.Itoa(pfc)+"5.png")
-	if err := cmd.Run(); err != nil {
-		fmt.Printf("Command %s \n Error: %s\n", cmd, err)
-	}
-	cmd = exec.Command(exefile, "-ss", tp6, "-i", tnfile, "-vframes", "100", "-s", "128x96", "static/"+strconv.Itoa(pfc)+"6.png")
+
+	cmd = exec.Command(
+		exefile,
+		"-ss", tp6,
+		"-i", tnfile,
+		"-vframes", "1",
+		"-vf", "scale=128:96:force_original_aspect_ratio=decrease",
+		"static/"+strconv.Itoa(pfc)+"6.png",
+	)
 	if err := cmd.Run(); err != nil {
 		fmt.Printf("Command %s \n Error: %s\n", cmd, err)
 	}
@@ -987,94 +1097,63 @@ func MoveDisplay(exefile string, exefilea string, tnfile string, fileName string
 	return xdata
 }
 
-func TimePosition(exefilea string, tnfile string, ctl int) string {
-	xdata := ""
-	bfile := ""
-	switch runtime.GOOS {
-	case "windows":
-		bfile = "tmp.bat"
-	case "linux":
-		bfile = "tmp.sh"
+func TimePosition(ffprobePath string, tnfile string, ctl int) string {
+	fmt.Println("\nGetting time position for " + tnfile)
 
-	}
-	//-------------------------------------------------------------------------------------------------
-	bdata := []byte(exefilea + " -i " + tnfile + " -show_entries format=duration -v quiet -of csv >tmp.csv")
-	err := os.WriteFile(bfile, bdata, 0777)
-	if runtime.GOOS == "linux" {
-		bfile = "./" + bfile
-	}
-	cmd := exec.Command(bfile)
-	if err = cmd.Run(); err != nil {
-		fmt.Printf("Command %s \n Error: %s\n", cmd, err)
-	}
-	dat := []byte("")
-	dat, err = os.ReadFile("tmp.csv")
-	tdata := string(dat)
-	tmp := strings.Split(tdata, ",")
-	tmpa := strings.Split(tmp[1], ".")
-	t := tmpa[0]
-	i, _ := strconv.Atoi(t)
-	mc := 0
-	m := 0
-	sc := 0
-	for x := 0; x < i; x++ {
-		mc++
-		sc++
-		if mc > 59 {
-			m++
-			mc = 0
-			sc = 0
+	//----------------------------------------------------------------------
+	// 1. Try to get BITRATE first (fastest)
+	//----------------------------------------------------------------------
+	bitrate := getBitrate(ffprobePath, tnfile)
+
+	//----------------------------------------------------------------------
+	// 2. If bitrate missing or invalid, fall back to DURATION
+	//----------------------------------------------------------------------
+	if bitrate <= 0 {
+		fmt.Println("Bitrate unavailable, falling back to duration")
+		duration := getDuration(ffprobePath, tnfile)
+
+		if duration <= 0 {
+			fmt.Println("Duration also unavailable — using safe fallback")
+			return "00:00:10"
 		}
 
+		// Convert seconds → minutes
+		bitrate = duration / 60 * 60000 // simulate bitrate-based logic
 	}
+
+	//----------------------------------------------------------------------
+	// 3. Convert bitrate to minutes (your original logic)
+	//----------------------------------------------------------------------
+	m := bitrate / 60000
+
 	if m < 2 {
-		xdata = "00:00:10"
-	} else {
-		if m < 60 {
-			nt := m / 2
-			switch {
-			case ctl == 1:
-				ntt := nt / 2
-				nttt := ntt / 2
-				ntttt := nttt / 2
-				nt = nt - ntt
-				nt = nt - nttt
-				nt = nt - ntttt
-			case ctl == 2:
-				ntt := nt / 2
-				nttt := ntt / 2
-				nt = nt - ntt
-				nt = nt - nttt
-			case ctl == 3:
-				ntt := nt / 2
-				nt = nt - ntt
-			case ctl == 4:
-				ntt := nt / 2
-				nt = nt + ntt
-			case ctl == 5:
-				ntt := nt / 2
-				nttt := ntt / 2
-				nt = nt + ntt
-				nt = nt + nttt
-			case ctl == 6:
-				ntt := nt / 2
-				nttt := ntt / 2
-				ntttt := nttt / 2
-				nt = nt + ntt
-				nt = nt + nttt
-				nt = nt + ntttt
-			}
-			if nt > 9 {
-				xdata = "00:" + strconv.Itoa(nt) + ":00"
-			} else {
-				xdata = "00:0" + strconv.Itoa(nt) + ":00"
-			}
-		} else {
-			xdata = "00:59:00"
-		}
+		return "00:00:10"
+	}
+	if m >= 60 {
+		return "00:59:00"
 	}
 
-	return xdata
+	nt := m / 2
+
+	switch ctl {
+	case 1:
+		nt -= nt/2 + nt/4 + nt/8
+	case 2:
+		nt -= nt/2 + nt/4
+	case 3:
+		nt -= nt / 2
+	case 4:
+		nt += nt / 2
+	case 5:
+		nt += nt/2 + nt/4
+	case 6:
+		nt += nt/2 + nt/4 + nt/8
+	}
+
+	if nt < 10 {
+		return fmt.Sprintf("00:0%d:00", nt)
+	}
+	return fmt.Sprintf("00:%d:00", nt)
 }
 
 func CheckforFile(path string) bool {
@@ -1554,7 +1633,6 @@ func DisplayPage(subdir bool, xip string, port string, page string, sdir string,
 		pgcnt = 1
 		fc = 0
 		for _, file := range files {
-
 			if ValidFileType(strings.ToLower(path.Ext(file.Name()))) {
 				pfc++
 				fc++
@@ -1571,6 +1649,7 @@ func DisplayPage(subdir bool, xip string, port string, page string, sdir string,
 					case display == 1:
 						xdata = xdata + ImageScrollDisplay(exefile, tnfile, file.Name(), fc, pfc, file.Name(), xip, sdir)
 					}
+
 					//-------------------------------------------------------------------------------------------------
 					xdata = xdata + "<TABLE>"
 					xdata = xdata + "<TD with='200'>"
@@ -1583,6 +1662,7 @@ func DisplayPage(subdir bool, xip string, port string, page string, sdir string,
 					xdata = xdata + "</TD>"
 					xdata = xdata + "<TD with='400'>"
 					xdata = xdata + "<center>"
+					fmt.Println(file.Name())
 					xdata = xdata + FileData(exefilea, tnfile, file.Name())
 					xdata = xdata + "</center>"
 					xdata = xdata + "</TD>"
@@ -1772,6 +1852,7 @@ func MoveVideoPage(xip string, port string, video string, exefile string, exefil
 	xdata = xdata + "</TD>"
 	xdata = xdata + "<TD valign='top' with='200'>"
 	xdata = xdata + "<center>"
+	fmt.Println(tfile)
 	xdata = xdata + FileData(exefilea, tnfile, tfile)
 	xdata = xdata + "</center>"
 	xdata = xdata + "</TD>"
@@ -2289,7 +2370,6 @@ func CategoryDisplayPage(xip string, exefile string, exefilea string, tag string
 			}
 			s := fmt.Sprintf("%v", dir.GetValue())
 
-			fmt.Println("test")
 			tfile := wdir + s + "/" + v
 			tnfile := fixFileName(tfile)
 			fmt.Println(tnfile)
