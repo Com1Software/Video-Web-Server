@@ -34,13 +34,13 @@ func main() {
 	exefile := ""
 	exefilea := ""
 
-	drive := "c"
-	wdir := "/tmp/"
+	drive := "f"
+	wdir := "/tunes/"
 	switch runtime.GOOS {
 	case "windows":
 		exefile = "/ffmpeg/bin/ffmpeg.exe"
 		exefilea = "/ffmpeg/bin/ffprobe.exe"
-		wdir = "/dwhelper/"
+		wdir = "/tunes"
 
 	case "linux":
 		exefile = "ffmpeg"
@@ -51,7 +51,7 @@ func main() {
 
 	pgsize := 10
 	maxsel := 1000
-	display := 0
+	display := 1
 	subdir := true
 	switch {
 	//-------------------------------------------------------------
@@ -1408,6 +1408,7 @@ func DisplayPage(subdir bool, xip string, port string, page string, sdir string,
 		fctl = true
 	}
 	if fctl {
+		fmt.Println("Display Directory " + nsd)
 		files, err := ioutil.ReadDir(nsd)
 		if err != nil {
 
